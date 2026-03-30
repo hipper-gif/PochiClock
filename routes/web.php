@@ -36,11 +36,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/dashboard/profile', [ProfileController::class, 'updateName'])->name('profile.updateName');
     Route::put('/dashboard/profile/password', [ProfileController::class, 'changePassword'])->name('profile.changePassword');
 
-    // 管理者
-    Route::middleware('admin')->prefix('admin')->group(function () {
+    // 管理者（admin専用）
+    Route::middleware('role:ADMIN')->prefix('admin')->group(function () {
         Route::get('/', fn () => redirect()->route('admin.users.index'));
 
-        // ユーザー管理
+        // ユーザー管理（admin専用）
         Route::get('/users', [Admin\UserController::class, 'index'])->name('admin.users.index');
         Route::get('/users/create', [Admin\UserController::class, 'create'])->name('admin.users.create');
         Route::post('/users', [Admin\UserController::class, 'store'])->name('admin.users.store');
@@ -51,26 +51,28 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}/status', [Admin\UserController::class, 'toggleStatus'])->name('admin.users.toggleStatus');
         Route::put('/users/{user}/department', [Admin\UserController::class, 'assignDepartment'])->name('admin.users.assignDepartment');
 
-        // 部署管理
+        // 部署管理（admin専用）
         Route::get('/departments', [Admin\DepartmentController::class, 'index'])->name('admin.departments.index');
         Route::post('/departments', [Admin\DepartmentController::class, 'store'])->name('admin.departments.store');
         Route::put('/departments/{department}', [Admin\DepartmentController::class, 'update'])->name('admin.departments.update');
         Route::delete('/departments/{department}', [Admin\DepartmentController::class, 'destroy'])->name('admin.departments.destroy');
 
-        // 勤怠管理
+        // 勤務ルール設定（admin専用）
+        Route::get('/settings', [Admin\WorkRuleController::class, 'index'])->name('admin.settings.index');
+        Route::post('/settings/system', [Admin\WorkRuleController::class, 'upsertSystem'])->name('admin.settings.upsertSystem');
+        Route::post('/settings/department', [Admin\WorkRuleController::class, 'upsertDepartment'])->name('admin.settings.upsertDepartment');
+        Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
+        Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
+    });
+
+    // 勤怠管理（admin + manager）
+    Route::middleware(['role:ADMIN,MANAGER', 'department.access'])->prefix('admin')->group(function () {
         Route::get('/attendance', [Admin\AttendanceController::class, 'index'])->name('admin.attendance.index');
         Route::put('/attendance/{attendance}', [Admin\AttendanceController::class, 'update'])->name('admin.attendance.update');
         Route::get('/attendance/export', [Admin\AttendanceController::class, 'export'])->name('admin.attendance.export');
         Route::post('/attendance/{attendance}/breaks', [Admin\AttendanceController::class, 'addBreak'])->name('admin.attendance.addBreak');
         Route::put('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'updateBreak'])->name('admin.attendance.updateBreak');
         Route::delete('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'deleteBreak'])->name('admin.attendance.deleteBreak');
-
-        // 勤務ルール設定
-        Route::get('/settings', [Admin\WorkRuleController::class, 'index'])->name('admin.settings.index');
-        Route::post('/settings/system', [Admin\WorkRuleController::class, 'upsertSystem'])->name('admin.settings.upsertSystem');
-        Route::post('/settings/department', [Admin\WorkRuleController::class, 'upsertDepartment'])->name('admin.settings.upsertDepartment');
-        Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
-        Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
     });
 });
 
