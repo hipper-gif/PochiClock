@@ -14,6 +14,7 @@ class WorkRule extends Model
     protected $fillable = [
         'scope',
         'department_id',
+        'job_group_id',
         'user_id',
         'work_start_time',
         'work_end_time',
@@ -37,6 +38,11 @@ class WorkRule extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function jobGroup(): BelongsTo
+    {
+        return $this->belongsTo(JobGroup::class);
     }
 
     public function user(): BelongsTo

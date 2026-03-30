@@ -51,6 +51,12 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}/status', [Admin\UserController::class, 'toggleStatus'])->name('admin.users.toggleStatus');
         Route::put('/users/{user}/department', [Admin\UserController::class, 'assignDepartment'])->name('admin.users.assignDepartment');
 
+        // 職種グループ管理
+        Route::get('/job-groups', [Admin\JobGroupController::class, 'index'])->name('admin.job-groups.index');
+        Route::post('/job-groups', [Admin\JobGroupController::class, 'store'])->name('admin.job-groups.store');
+        Route::put('/job-groups/{jobGroup}', [Admin\JobGroupController::class, 'update'])->name('admin.job-groups.update');
+        Route::delete('/job-groups/{jobGroup}', [Admin\JobGroupController::class, 'destroy'])->name('admin.job-groups.destroy');
+
         // 部署管理
         Route::get('/departments', [Admin\DepartmentController::class, 'index'])->name('admin.departments.index');
         Route::post('/departments', [Admin\DepartmentController::class, 'store'])->name('admin.departments.store');
@@ -68,7 +74,7 @@ Route::middleware('auth')->group(function () {
         // 勤務ルール設定
         Route::get('/settings', [Admin\WorkRuleController::class, 'index'])->name('admin.settings.index');
         Route::post('/settings/system', [Admin\WorkRuleController::class, 'upsertSystem'])->name('admin.settings.upsertSystem');
-        Route::post('/settings/department', [Admin\WorkRuleController::class, 'upsertDepartment'])->name('admin.settings.upsertDepartment');
+        Route::post('/settings/job-group', [Admin\WorkRuleController::class, 'upsertJobGroup'])->name('admin.settings.upsertJobGroup');
         Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
         Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
     });

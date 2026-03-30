@@ -29,11 +29,15 @@ class DepartmentController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'min:1', 'max:100', 'unique:departments,name,' . $department->id],
+            'job_group_id' => 'nullable|exists:job_groups,id',
         ]);
 
-        $department->update(['name' => trim($request->name)]);
+        $department->update([
+            'name' => trim($request->name),
+            'job_group_id' => $request->job_group_id ?: null,
+        ]);
 
-        return back()->with('success', '部署名を変更しました');
+        return back()->with('success', '部署を更新しました');
     }
 
     public function destroy(Department $department)

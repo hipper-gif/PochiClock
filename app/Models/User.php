@@ -22,6 +22,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'department_id',
+        'job_group_id',
     ];
 
     protected $hidden = [
@@ -41,6 +42,24 @@ class User extends Authenticatable
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function jobGroup(): BelongsTo
+    {
+        return $this->belongsTo(JobGroup::class);
+    }
+
+    /**
+     * ユーザーの有効な職種グループを返す。
+     * ユーザー個人に設定があればそれを、なければ所属部署の職種グループを返す。
+     */
+    public function resolvedJobGroup(): ?JobGroup
+    {
+        if ($this->job_group_id) {
+            return $this->jobGroup;
+        }
+
+        return $this->department?->jobGroup;
     }
 
     public function attendances(): HasMany
