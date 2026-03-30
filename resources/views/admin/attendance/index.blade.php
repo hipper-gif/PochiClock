@@ -97,6 +97,10 @@
                                 <label class="text-xs text-gray-500">備考</label>
                                 <input type="text" name="note" value="{{ $att->note }}" class="text-sm border rounded px-2 py-1">
                             </div>
+                            <div>
+                                <label class="text-xs text-gray-500">修正理由</label>
+                                <input type="text" name="reason" placeholder="修正理由を入力" class="text-sm border rounded px-2 py-1">
+                            </div>
                             <button type="submit" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">保存</button>
                         </form>
                     </td>

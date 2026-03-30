@@ -65,6 +65,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'updateBreak'])->name('admin.attendance.updateBreak');
         Route::delete('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'deleteBreak'])->name('admin.attendance.deleteBreak');
 
+        // 監査ログ
+        Route::get('/audit-logs', [Admin\AuditLogController::class, 'index'])->name('admin.audit-logs.index');
+
         // 勤務ルール設定
         Route::get('/settings', [Admin\WorkRuleController::class, 'index'])->name('admin.settings.index');
         Route::post('/settings/system', [Admin\WorkRuleController::class, 'upsertSystem'])->name('admin.settings.upsertSystem');
