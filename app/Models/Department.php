@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,8 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Department extends Model
 {
     use HasUuids;
+    use BelongsToTenant;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['tenant_id', 'name'];
 
     public function users(): HasMany
     {

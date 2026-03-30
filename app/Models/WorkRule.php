@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WorkRuleScope;
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,8 +11,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class WorkRule extends Model
 {
     use HasUuids;
+    use BelongsToTenant;
 
     protected $fillable = [
+        'tenant_id',
         'scope',
         'department_id',
         'user_id',

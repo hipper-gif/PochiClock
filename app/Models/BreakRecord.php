@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,10 +10,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class BreakRecord extends Model
 {
     use HasUuids;
+    use BelongsToTenant;
 
     protected $table = 'break_records';
 
     protected $fillable = [
+        'tenant_id',
         'attendance_id',
         'break_start',
         'break_end',

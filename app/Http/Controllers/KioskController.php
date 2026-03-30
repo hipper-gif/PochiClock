@@ -21,11 +21,15 @@ class KioskController extends Controller
 
     public function department(Department $department)
     {
+        // Kiosk routes are unauthenticated; set tenant context from the department
+        $this->setTenantFromDepartment($department);
+
         return view('kiosk.department', compact('department'));
     }
 
     public function lookup(Request $request, Department $department)
     {
+        $this->setTenantFromDepartment($department);
         $request->validate([
             'kiosk_code' => 'required|digits:4',
         ]);
@@ -69,6 +73,7 @@ class KioskController extends Controller
 
     public function clockIn(Request $request, Department $department)
     {
+        $this->setTenantFromDepartment($department);
         $request->validate(['user_id' => 'required|exists:users,id']);
 
         $user = User::findOrFail($request->user_id);
@@ -103,6 +108,7 @@ class KioskController extends Controller
 
     public function clockOut(Request $request, Department $department)
     {
+        $this->setTenantFromDepartment($department);
         $request->validate(['user_id' => 'required|exists:users,id']);
 
         $user = User::findOrFail($request->user_id);
@@ -128,5 +134,15 @@ class KioskController extends Controller
         $attendance->update(['clock_out' => Carbon::now()]);
 
         return response()->json(['success' => true, 'message' => '退勤しました']);
+    }
+
+    /**
+     * Set the tenant context from a department (for unauthenticated kiosk routes).
+     */
+    private function setTenantFromDepartment(Department $department): void
+    {
+        if ($department->tenant_id) {
+            app()->instance('current_tenant_id', $department->tenant_id);
+        }
     }
 }
