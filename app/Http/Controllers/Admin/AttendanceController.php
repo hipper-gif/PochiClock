@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\BreakRecord;
@@ -24,9 +25,15 @@ class AttendanceController extends Controller
         $year = $request->input('year', Carbon::now()->year);
         $month = $request->input('month', Carbon::now()->month);
         $departmentId = $request->input('department_id');
+        $currentUser = $request->user();
 
         $startOfMonth = Carbon::create($year, $month, 1)->startOfDay();
         $endOfMonth = $startOfMonth->copy()->endOfMonth()->endOfDay();
+
+        // Manager can only view their own department
+        if ($currentUser->role === Role::MANAGER) {
+            $departmentId = $currentUser->department_id;
+        }
 
         $query = Attendance::with(['user.department', 'breakRecords'])
             ->whereBetween('clock_in', [$startOfMonth, $endOfMonth])
@@ -43,7 +50,12 @@ class AttendanceController extends Controller
             ->orderBy('name')
             ->get();
 
-        $departments = Department::orderBy('name')->get();
+        // Managers only see their own department in the filter
+        if ($currentUser->role === Role::MANAGER) {
+            $departments = Department::where('id', $currentUser->department_id)->get();
+        } else {
+            $departments = Department::orderBy('name')->get();
+        }
 
         return view('admin.attendance.index', compact(
             'attendances', 'users', 'departments', 'year', 'month', 'departmentId'
@@ -72,6 +84,12 @@ class AttendanceController extends Controller
         $year = $request->input('year', Carbon::now()->year);
         $month = $request->input('month', Carbon::now()->month);
         $departmentId = $request->input('department_id');
+        $currentUser = $request->user();
+
+        // Manager can only export their own department
+        if ($currentUser->role === Role::MANAGER) {
+            $departmentId = $currentUser->department_id;
+        }
 
         $startOfMonth = Carbon::create($year, $month, 1)->startOfDay();
         $endOfMonth = $startOfMonth->copy()->endOfMonth()->endOfDay();

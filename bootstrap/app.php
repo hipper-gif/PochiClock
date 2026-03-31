@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureDepartmentAccess;
+use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\SetTenant;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => EnsureAdmin::class,
+            'role' => EnsureRole::class,
+            'department.access' => EnsureDepartmentAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
