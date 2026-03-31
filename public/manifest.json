@@ -1,0 +1,18 @@
+{
+    "name": "PochiClock - 勤怠管理",
+    "short_name": "PochiClock",
+    "description": "かんたん勤怠打刻アプリ",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4f46e5",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
