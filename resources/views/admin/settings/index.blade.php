@@ -106,6 +106,7 @@
                 <th class="px-3 py-2 text-left">始業</th>
                 <th class="px-3 py-2 text-left">終業</th>
                 <th class="px-3 py-2 text-left">休憩</th>
+                <th class="px-3 py-2 text-left">早出カット</th>
                 <th class="px-3 py-2 text-left">丸め</th>
             </tr>
         </thead>
@@ -119,6 +120,16 @@
                 <td class="px-3 py-2 font-mono">{{ $item['rule']['work_start_time'] }}</td>
                 <td class="px-3 py-2 font-mono">{{ $item['rule']['work_end_time'] }}</td>
                 <td class="px-3 py-2">{{ $item['rule']['default_break_minutes'] }}分</td>
+                <td class="px-3 py-2 font-mono text-xs">
+                    @if($item['rule']['early_clock_in_cutoff'])
+                        {{ $item['rule']['early_clock_in_cutoff'] }}
+                        @if($item['rule']['early_clock_in_cutoff_pm'])
+                            <br><span class="text-gray-400">午後:</span> {{ $item['rule']['early_clock_in_cutoff_pm'] }}
+                        @endif
+                    @else
+                        <span class="text-gray-300">-</span>
+                    @endif
+                </td>
                 <td class="px-3 py-2 text-xs">{{ $item['rule']['rounding_unit'] }}分</td>
             </tr>
             @endforeach

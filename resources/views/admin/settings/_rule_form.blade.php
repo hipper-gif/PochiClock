@@ -37,6 +37,19 @@
     </div>
 </div>
 
+<div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+        <label class="text-sm text-gray-600">早出カット時刻</label>
+        <input type="time" name="early_clock_in_cutoff" value="{{ $rule?->early_clock_in_cutoff ?? '' }}" class="w-full border rounded px-3 py-2 text-sm">
+        <p class="text-xs text-gray-400 mt-1">この時刻より前の出勤は、この時刻に丸められます</p>
+    </div>
+    <div>
+        <label class="text-sm text-gray-600">早出カット時刻（午後）</label>
+        <input type="time" name="early_clock_in_cutoff_pm" value="{{ $rule?->early_clock_in_cutoff_pm ?? '' }}" class="w-full border rounded px-3 py-2 text-sm">
+        <p class="text-xs text-gray-400 mt-1">午後セッション用（配達の2回出勤等）</p>
+    </div>
+</div>
+
 <div class="mb-4">
     <label class="flex items-center space-x-2">
         <input type="hidden" name="allow_multiple_clock_ins" value="0">

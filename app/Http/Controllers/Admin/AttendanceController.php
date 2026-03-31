@@ -137,8 +137,8 @@ class AttendanceController extends Controller
                     'clock_out_rounding' => $rule['clock_out_rounding'],
                 ];
                 $breakMin = app(TimeService::class)->calculateBreakMinutes($att->breakRecords);
-                $workMin = app(TimeService::class)->calculateWorkingMinutesWithRounding(
-                    $att->clock_in, $att->clock_out, $att->breakRecords, $rounding
+                $workMin = app(TimeService::class)->calculateWorkingMinutesWithCutoff(
+                    $att->clock_in, $att->clock_out, $att->breakRecords, $rounding, $rule
                 );
 
                 fputcsv($file, [

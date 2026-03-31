@@ -51,19 +51,21 @@ class DashboardController extends Controller
             $status = 'clocked_out';
         }
 
-        // Calculate totals across all sessions
-        $totalDailyWorkingMinutes = $this->timeService->calculateDailyWorkingMinutes($todayAttendances, $rounding);
+        // Calculate totals across all sessions (with cutoff)
+        $totalDailyWorkingMinutes = $this->timeService->calculateDailyWorkingMinutes($todayAttendances, $rounding, $rule);
 
         if ($attendance) {
             $breakMinutes = $this->timeService->calculateBreakMinutes($attendance->breakRecords);
             $breakCount = $attendance->breakRecords->count();
 
             if ($attendance->clock_out) {
-                $workingMinutes = $this->timeService->calculateWorkingMinutesWithRounding(
+                $workingMinutes = $this->timeService->calculateWorkingMinutesWithCutoff(
                     $attendance->clock_in,
                     $attendance->clock_out,
                     $attendance->breakRecords,
-                    $rounding
+                    $rounding,
+                    $rule,
+                    $attendance->session_number ?? 1
                 );
             }
 
@@ -76,10 +78,12 @@ class DashboardController extends Controller
 
         $roundedTimes = null;
         if ($attendance) {
-            $roundedTimes = $this->timeService->getRoundedTimes(
+            $roundedTimes = $this->timeService->getRoundedTimesWithCutoff(
                 $attendance->clock_in,
                 $attendance->clock_out,
-                $rounding
+                $rounding,
+                $rule,
+                $attendance->session_number ?? 1
             );
         }
 
@@ -127,7 +131,9 @@ class DashboardController extends Controller
             }
             foreach ($dayRecords as $record) {
                 if ($record->clock_out) {
-                    $rounded = $this->timeService->getRoundedTimes($record->clock_in, $record->clock_out, $rounding);
+                    $rounded = $this->timeService->getRoundedTimesWithCutoff(
+                        $record->clock_in, $record->clock_out, $rounding, $rule, $record->session_number ?? 1
+                    );
                     $bindingMin = $rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']);
                     $breakMin = $this->timeService->calculateBreakMinutes($record->breakRecords);
                     $totalBindingMinutes += $bindingMin;

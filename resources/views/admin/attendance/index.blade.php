@@ -44,7 +44,7 @@
                 $totalWork = 0;
                 foreach ($userAttendances as $a) {
                     if ($a->clock_out) {
-                        $totalWork += app(\App\Services\TimeService::class)->calculateWorkingMinutesWithRounding($a->clock_in, $a->clock_out, $a->breakRecords, $rounding) ?? 0;
+                        $totalWork += app(\App\Services\TimeService::class)->calculateWorkingMinutesWithCutoff($a->clock_in, $a->clock_out, $a->breakRecords, $rounding, $rule) ?? 0;
                     }
                 }
             @endphp
@@ -70,11 +70,20 @@
                 <tr>
                     <td class="px-3 py-2 font-mono">{{ $att->clock_in->format('m/d') }}</td>
                     <td class="px-3 py-2 font-mono text-gray-400">{{ $att->session_number > 1 ? $att->session_number : '' }}</td>
-                    <td class="px-3 py-2 font-mono">{{ $att->clock_in->format('H:i') }}</td>
+                    @php
+                        $effectiveClockIn = app(\App\Services\TimeService::class)->getEffectiveClockIn($att->clock_in, $rule, $att->session_number ?? 1);
+                        $cutoffApplied = !$effectiveClockIn->eq($att->clock_in);
+                    @endphp
+                    <td class="px-3 py-2 font-mono">
+                        {{ $effectiveClockIn->format('H:i') }}
+                        @if($cutoffApplied)
+                            <span class="text-xs text-amber-600 block">実際: {{ $att->clock_in->format('H:i') }}</span>
+                        @endif
+                    </td>
                     <td class="px-3 py-2 font-mono">{{ $att->clock_out?->format('H:i') ?? '-' }}</td>
                     <td class="px-3 py-2 font-mono">{{ app(\App\Services\TimeService::class)->calculateBreakMinutes($att->breakRecords) }}分</td>
                     @php
-                        $wm = app(\App\Services\TimeService::class)->calculateWorkingMinutesWithRounding($att->clock_in, $att->clock_out, $att->breakRecords, $rounding);
+                        $wm = app(\App\Services\TimeService::class)->calculateWorkingMinutesWithCutoff($att->clock_in, $att->clock_out, $att->breakRecords, $rounding, $rule);
                     @endphp
                     <td class="px-3 py-2 font-mono">{{ $wm !== null ? floor($wm/60).':'.str_pad($wm%60,2,'0',STR_PAD_LEFT) : '-' }}</td>
                     <td class="px-3 py-2 text-gray-500">{{ $att->note ?? '' }}</td>

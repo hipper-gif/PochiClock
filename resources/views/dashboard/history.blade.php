@@ -59,7 +59,7 @@
                     @endphp
                     @foreach($dayRecords as $record)
                         @php
-                            $rounded = app(\App\Services\TimeService::class)->getRoundedTimes($record->clock_in, $record->clock_out, $rounding);
+                            $rounded = app(\App\Services\TimeService::class)->getRoundedTimesWithCutoff($record->clock_in, $record->clock_out, $rounding, $rule, $record->session_number ?? 1);
                             $breakMin = app(\App\Services\TimeService::class)->calculateBreakMinutes($record->breakRecords);
                             $bindMin = $rounded['rounded_clock_out'] ? $rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']) : null;
                             $workMin = $bindMin !== null ? max(0, $bindMin - $breakMin) : null;
@@ -74,7 +74,12 @@
                                 <td class="px-4 py-3 font-mono" rowspan="{{ $dayRecords->count() }}">{{ $record->clock_in->format('m/d') }}<span class="text-gray-400 ml-1">{{ $record->clock_in->isoFormat('ddd') }}</span></td>
                             @endif
                             <td class="px-4 py-3 font-mono text-gray-400">{{ $dayRecords->count() > 1 ? $record->session_number : '' }}</td>
-                            <td class="px-4 py-3 font-mono">{{ $rounded['rounded_clock_in']->format('H:i') }}</td>
+                            <td class="px-4 py-3 font-mono">
+                                {{ $rounded['rounded_clock_in']->format('H:i') }}
+                                @if($rounded['cutoff_applied'] ?? false)
+                                    <span class="text-xs text-amber-600 block" title="早出カット適用">実際: {{ $rounded['actual_clock_in']->format('H:i') }}</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 font-mono">{{ $rounded['rounded_clock_out'] ? $rounded['rounded_clock_out']->format('H:i') : '--:--' }}</td>
                             <td class="px-4 py-3 font-mono">{{ $breakMin > 0 ? floor($breakMin / 60) . ':' . str_pad($breakMin % 60, 2, '0', STR_PAD_LEFT) : '-' }}</td>
                             <td class="px-4 py-3 font-mono">{{ $bindMin !== null ? floor($bindMin / 60) . ':' . str_pad($bindMin % 60, 2, '0', STR_PAD_LEFT) : '-' }}</td>
