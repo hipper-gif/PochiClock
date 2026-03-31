@@ -55,9 +55,13 @@
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-1">キオスクコード（4桁数字、任意）</label>
-                <input type="text" name="kiosk_code" value="{{ old('kiosk_code') }}" maxlength="4" pattern="\d{4}"
-                    class="w-full px-3 py-2 border rounded-md">
+                <label class="block text-sm font-medium text-gray-700 mb-1">PIN（4桁数字、任意）</label>
+                <div class="flex space-x-2">
+                    <input type="text" name="kiosk_code" id="kiosk_code" value="{{ old('kiosk_code') }}" maxlength="4" pattern="\d{4}"
+                        class="flex-1 px-3 py-2 border rounded-md" placeholder="4桁の数字">
+                    <button type="button" onclick="generatePin()"
+                        class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm whitespace-nowrap">自動生成</button>
+                </div>
                 @error('kiosk_code') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
@@ -68,4 +72,11 @@
         </form>
     </div>
 </div>
+
+<script>
+function generatePin() {
+    const pin = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    document.getElementById('kiosk_code').value = pin;
+}
+</script>
 @endsection
