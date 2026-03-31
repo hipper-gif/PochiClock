@@ -119,4 +119,18 @@ class UserController extends Controller
 
         return back()->with('success', '部署を変更しました');
     }
+
+    public function resetQrToken(User $user)
+    {
+        $user->generateQrToken();
+
+        return back()->with('success', 'QRトークンを発行しました');
+    }
+
+    public function clearQrToken(User $user)
+    {
+        $user->update(['qr_token' => null]);
+
+        return back()->with('success', 'QRトークンを削除しました');
+    }
 }

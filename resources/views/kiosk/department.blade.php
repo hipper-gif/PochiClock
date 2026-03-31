@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between mb-8">
         <a href="{{ route('kiosk.index') }}" class="text-gray-400 hover:text-white">&larr; 戻る</a>
         <h1 class="text-2xl font-bold">{{ $department->name }}</h1>
-        <div></div>
+        <a href="{{ route('kiosk.qr', $department) }}" class="text-gray-400 hover:text-white text-sm">QRスキャン</a>
     </div>
 
     {{-- コード入力 --}}
