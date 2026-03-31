@@ -130,4 +130,62 @@ class UserController extends Controller
 
         return back()->with('success', '部署を変更しました');
     }
+
+    public function resetPin(User $user)
+    {
+        $pin = $this->generateUniquePin();
+
+        if ($pin === null) {
+            return back()->with('error', 'PINの生成に失敗しました。時間をおいて再試行してください。');
+        }
+
+        $user->update(['kiosk_code' => $pin]);
+
+        return back()->with('success', "新しいPINは {$pin} です");
+    }
+
+    public function clearPin(User $user)
+    {
+        $user->update(['kiosk_code' => null]);
+
+        return back()->with('success', 'PINを削除しました');
+    }
+
+    public function bulkGeneratePins(Request $request)
+    {
+        $usersWithoutPin = User::whereNull('kiosk_code')->where('is_active', true)->get();
+        $generated = 0;
+        $failed = 0;
+
+        foreach ($usersWithoutPin as $user) {
+            $pin = $this->generateUniquePin();
+            if ($pin !== null) {
+                $user->update(['kiosk_code' => $pin]);
+                $generated++;
+            } else {
+                $failed++;
+            }
+        }
+
+        $message = "{$generated}名にPINを発行しました";
+        if ($failed > 0) {
+            $message .= "（{$failed}名は発行に失敗しました）";
+        }
+
+        return back()->with('success', $message);
+    }
+
+    private function generateUniquePin(): ?string
+    {
+        $existingCodes = User::whereNotNull('kiosk_code')->pluck('kiosk_code')->toArray();
+
+        for ($i = 0; $i < 10; $i++) {
+            $pin = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            if (!in_array($pin, $existingCodes)) {
+                return $pin;
+            }
+        }
+
+        return null;
+    }
 }

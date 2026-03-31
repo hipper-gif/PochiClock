@@ -3,7 +3,14 @@
 @section('content')
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-800">ユーザー管理</h1>
-    <a href="{{ route('admin.users.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm">新規作成</a>
+    <div class="flex space-x-2">
+        <form method="POST" action="{{ route('admin.users.bulkGeneratePins') }}" class="inline"
+            onsubmit="return confirm('PIN未設定の有効ユーザー全員にPINを一括発行しますか？')">
+            @csrf
+            <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm">未設定者にPIN一括発行</button>
+        </form>
+        <a href="{{ route('admin.users.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm">新規作成</a>
+    </div>
 </div>
 
 <div class="mb-4 flex space-x-4 text-sm">
@@ -23,7 +30,7 @@
                 <th class="px-4 py-3 text-left">メール</th>
                 <th class="px-4 py-3 text-left">部署</th>
                 <th class="px-4 py-3 text-left">ロール</th>
-                <th class="px-4 py-3 text-left">キオスク</th>
+                <th class="px-4 py-3 text-left">PIN</th>
                 <th class="px-4 py-3 text-left">状態</th>
                 <th class="px-4 py-3 text-left">操作</th>
             </tr>
@@ -54,7 +61,13 @@
                         </select>
                     </form>
                 </td>
-                <td class="px-4 py-3 font-mono text-gray-500">{{ $u->kiosk_code ?? '-' }}</td>
+                <td class="px-4 py-3">
+                    @if($u->kiosk_code)
+                        <span class="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">設定済み</span>
+                    @else
+                        <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-500">未設定</span>
+                    @endif
+                </td>
                 <td class="px-4 py-3">
                     @if($u->id !== auth()->id())
                     <form method="POST" action="{{ route('admin.users.toggleStatus', $u) }}" class="inline">
@@ -69,6 +82,11 @@
                 </td>
                 <td class="px-4 py-3 space-x-2">
                     <a href="{{ route('admin.users.edit', $u) }}" class="text-indigo-600 hover:underline text-xs">編集</a>
+                    <form method="POST" action="{{ route('admin.users.resetPin', $u) }}" class="inline">
+                        @csrf
+                        <button type="submit" class="text-indigo-600 hover:underline text-xs"
+                            onclick="return confirm('{{ $u->name }} のPINをリセットしますか？')">リセット</button>
+                    </form>
                     @if($u->id !== auth()->id())
                     <form method="POST" action="{{ route('admin.users.destroy', $u) }}" class="inline" onsubmit="return confirm('本当に削除しますか？')">
                         @csrf @method('DELETE')

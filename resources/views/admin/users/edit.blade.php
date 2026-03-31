@@ -45,5 +45,62 @@
             </div>
         </form>
     </div>
+
+    {{-- PIN管理セクション --}}
+    <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <h2 class="text-lg font-bold text-gray-800 mb-4">PIN管理</h2>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">現在のPIN</label>
+            <div class="flex items-center space-x-3">
+                @if($user->kiosk_code)
+                    <span id="pin-masked" class="font-mono text-lg tracking-widest">****</span>
+                    <span id="pin-visible" class="font-mono text-lg tracking-widest hidden">{{ $user->kiosk_code }}</span>
+                    <button type="button" onclick="togglePin()" id="pin-toggle-btn"
+                        class="text-xs px-2 py-1 border rounded text-gray-600 hover:bg-gray-50">表示</button>
+                @else
+                    <span class="text-gray-400">未設定</span>
+                @endif
+            </div>
+        </div>
+
+        <div class="flex space-x-3">
+            <form method="POST" action="{{ route('admin.users.resetPin', $user) }}">
+                @csrf
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
+                    onclick="return confirm('PINをリセットしますか？')">
+                    PINリセット
+                </button>
+            </form>
+
+            @if($user->kiosk_code)
+            <form method="POST" action="{{ route('admin.users.clearPin', $user) }}">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 text-sm"
+                    onclick="return confirm('PINを削除しますか？')">
+                    PIN削除
+                </button>
+            </form>
+            @endif
+        </div>
+    </div>
 </div>
+
+<script>
+function togglePin() {
+    const masked = document.getElementById('pin-masked');
+    const visible = document.getElementById('pin-visible');
+    const btn = document.getElementById('pin-toggle-btn');
+    if (masked.classList.contains('hidden')) {
+        masked.classList.remove('hidden');
+        visible.classList.add('hidden');
+        btn.textContent = '表示';
+    } else {
+        masked.classList.add('hidden');
+        visible.classList.remove('hidden');
+        btn.textContent = '非表示';
+    }
+}
+</script>
 @endsection

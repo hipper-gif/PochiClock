@@ -50,6 +50,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}/role', [Admin\UserController::class, 'updateRole'])->name('admin.users.updateRole');
         Route::put('/users/{user}/status', [Admin\UserController::class, 'toggleStatus'])->name('admin.users.toggleStatus');
         Route::put('/users/{user}/department', [Admin\UserController::class, 'assignDepartment'])->name('admin.users.assignDepartment');
+        Route::post('/users/{user}/reset-pin', [Admin\UserController::class, 'resetPin'])->name('admin.users.resetPin');
+        Route::delete('/users/{user}/pin', [Admin\UserController::class, 'clearPin'])->name('admin.users.clearPin');
+        Route::post('/users/bulk-generate-pins', [Admin\UserController::class, 'bulkGeneratePins'])->name('admin.users.bulkGeneratePins');
 
         // 職種グループ管理
         Route::get('/job-groups', [Admin\JobGroupController::class, 'index'])->name('admin.job-groups.index');
