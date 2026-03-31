@@ -28,6 +28,17 @@
                 @error('email') <p class="text-red-500 text-sm mt-1">{{ $message }}</p> @enderror
             </div>
 
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1">職種グループ（個人上書き）</label>
+                <select name="job_group_id" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">部署の設定に従う</option>
+                    @foreach($jobGroups as $jg)
+                        <option value="{{ $jg->id }}" {{ old('job_group_id', $user->job_group_id) == $jg->id ? 'selected' : '' }}>{{ $jg->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-400 mt-1">通常は空欄のままで、部署に紐付いた職種グループが適用されます</p>
+            </div>
+
             <div class="flex space-x-4">
                 <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">更新</button>
                 <a href="{{ route('admin.users.index') }}" class="px-6 py-2 border rounded-md text-gray-600 hover:bg-gray-50">キャンセル</a>

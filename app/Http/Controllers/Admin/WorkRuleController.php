@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\WorkRuleScope;
 use App\Http\Controllers\Controller;
-use App\Models\Department;
+use App\Models\JobGroup;
 use App\Models\User;
 use App\Models\WorkRule;
 use App\Services\WorkRuleService;
@@ -17,13 +17,13 @@ class WorkRuleController extends Controller
     public function index()
     {
         $systemRule = $this->workRuleService->getSystemRule();
-        $departmentRules = $this->workRuleService->getDepartmentRules();
+        $jobGroupRules = $this->workRuleService->getJobGroupRules();
         $userRules = $this->workRuleService->getUserRules();
-        $departments = Department::orderBy('name')->get();
+        $jobGroups = JobGroup::orderBy('name')->get();
         $users = User::orderBy('name')->get();
 
         // 全ユーザーの適用ルール一覧
-        $allUsersRules = User::with('department')->orderBy('name')->get()->map(function ($user) {
+        $allUsersRules = User::with(['department', 'jobGroup'])->orderBy('name')->get()->map(function ($user) {
             return [
                 'user' => $user,
                 'rule' => $this->workRuleService->resolve($user->id),
@@ -31,8 +31,8 @@ class WorkRuleController extends Controller
         });
 
         return view('admin.settings.index', compact(
-            'systemRule', 'departmentRules', 'userRules',
-            'departments', 'users', 'allUsersRules'
+            'systemRule', 'jobGroupRules', 'userRules',
+            'jobGroups', 'users', 'allUsersRules'
         ));
     }
 
@@ -48,18 +48,18 @@ class WorkRuleController extends Controller
         return back()->with('success', 'システムルールを保存しました');
     }
 
-    public function upsertDepartment(Request $request)
+    public function upsertJobGroup(Request $request)
     {
-        $request->validate(['department_id' => 'required|exists:departments,id']);
+        $request->validate(['job_group_id' => 'required|exists:job_groups,id']);
         $data = $this->validateRuleData($request);
-        $data['department_id'] = $request->department_id;
+        $data['job_group_id'] = $request->job_group_id;
 
         WorkRule::updateOrCreate(
-            ['scope' => WorkRuleScope::DEPARTMENT, 'department_id' => $request->department_id],
+            ['scope' => WorkRuleScope::JOB_GROUP, 'job_group_id' => $request->job_group_id],
             $data
         );
 
-        return back()->with('success', '部署ルールを保存しました');
+        return back()->with('success', '職種グループルールを保存しました');
     }
 
     public function upsertUser(Request $request)

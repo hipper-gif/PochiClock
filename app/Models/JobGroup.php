@@ -2,23 +2,20 @@
 
 namespace App\Models;
 
-use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Department extends Model
+class JobGroup extends Model
 {
     use HasUuids;
-    use BelongsToTenant;
 
-    protected $fillable = ['tenant_id', 'name', 'job_group_id'];
+    protected $fillable = ['name', 'description'];
 
-    public function jobGroup(): BelongsTo
+    public function departments(): HasMany
     {
-        return $this->belongsTo(JobGroup::class);
+        return $this->hasMany(Department::class);
     }
 
     public function users(): HasMany

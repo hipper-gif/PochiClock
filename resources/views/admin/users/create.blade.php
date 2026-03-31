@@ -54,6 +54,17 @@
                 </select>
             </div>
 
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">職種グループ（個人上書き）</label>
+                <select name="job_group_id" class="w-full px-3 py-2 border rounded-md">
+                    <option value="">部署の設定に従う</option>
+                    @foreach($jobGroups as $jg)
+                        <option value="{{ $jg->id }}" {{ old('job_group_id') == $jg->id ? 'selected' : '' }}>{{ $jg->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-400 mt-1">通常は空欄のままで、部署に紐付いた職種グループが適用されます</p>
+            </div>
+
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-1">キオスクコード（4桁数字、任意）</label>
                 <input type="text" name="kiosk_code" value="{{ old('kiosk_code') }}" maxlength="4" pattern="\d{4}"

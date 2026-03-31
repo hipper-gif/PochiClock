@@ -35,13 +35,14 @@ class WorkRuleService
             return $this->formatRule($rule, 'USER');
         }
 
-        // DEPARTMENT レベル
-        if ($user->department_id) {
-            $rule = WorkRule::where('scope', WorkRuleScope::DEPARTMENT)
-                ->where('department_id', $user->department_id)
+        // JOB_GROUP レベル（ユーザーの有効な職種グループで検索）
+        $jobGroup = $user->resolvedJobGroup();
+        if ($jobGroup) {
+            $rule = WorkRule::where('scope', WorkRuleScope::JOB_GROUP)
+                ->where('job_group_id', $jobGroup->id)
                 ->first();
             if ($rule) {
-                return $this->formatRule($rule, 'DEPARTMENT');
+                return $this->formatRule($rule, 'JOB_GROUP');
             }
         }
 
@@ -74,12 +75,12 @@ class WorkRuleService
         return WorkRule::where('scope', WorkRuleScope::SYSTEM)->first();
     }
 
-    public function getDepartmentRules()
+    public function getJobGroupRules()
     {
-        return WorkRule::where('scope', WorkRuleScope::DEPARTMENT)
-            ->with('department')
+        return WorkRule::where('scope', WorkRuleScope::JOB_GROUP)
+            ->with('jobGroup')
             ->get()
-            ->sortBy(fn ($r) => $r->department?->name);
+            ->sortBy(fn ($r) => $r->jobGroup?->name);
     }
 
     public function getUserRules()

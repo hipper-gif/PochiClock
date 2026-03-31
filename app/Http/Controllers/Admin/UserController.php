@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\JobGroup;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,8 @@ class UserController extends Controller
     public function create()
     {
         $departments = Department::orderBy('name')->get();
-        return view('admin.users.create', compact('departments'));
+        $jobGroups = JobGroup::orderBy('name')->get();
+        return view('admin.users.create', compact('departments', 'jobGroups'));
     }
 
     public function store(Request $request)
@@ -44,13 +46,17 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'role' => ['required', Rule::enum(Role::class)],
             'department_id' => 'nullable|exists:departments,id',
+            'job_group_id' => 'nullable|exists:job_groups,id',
             'kiosk_code' => 'nullable|digits:4|unique:users,kiosk_code',
         ]);
 
-        User::create($request->only([
-            'employee_number', 'name', 'email', 'password',
-            'role', 'department_id', 'kiosk_code',
-        ]));
+        User::create(array_merge(
+            $request->only([
+                'employee_number', 'name', 'email', 'password',
+                'role', 'department_id', 'kiosk_code',
+            ]),
+            ['job_group_id' => $request->job_group_id ?: null]
+        ));
 
         return redirect()->route('admin.users.index')->with('success', 'ユーザーを作成しました');
     }
@@ -58,7 +64,8 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $departments = Department::orderBy('name')->get();
-        return view('admin.users.edit', compact('user', 'departments'));
+        $jobGroups = JobGroup::orderBy('name')->get();
+        return view('admin.users.edit', compact('user', 'departments', 'jobGroups'));
     }
 
     public function update(Request $request, User $user)
@@ -66,9 +73,13 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|min:1|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'job_group_id' => 'nullable|exists:job_groups,id',
         ]);
 
-        $user->update($request->only(['name', 'email']));
+        $user->update(array_merge(
+            $request->only(['name', 'email']),
+            ['job_group_id' => $request->job_group_id ?: null]
+        ));
 
         return redirect()->route('admin.users.index')->with('success', 'ユーザー情報を更新しました');
     }

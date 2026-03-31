@@ -13,37 +13,37 @@
     </form>
 </div>
 
-{{-- 部署別ルール --}}
+{{-- 職種グループ別ルール --}}
 <div class="bg-white rounded-lg shadow p-6 mb-6">
-    <h2 class="text-lg font-semibold mb-4">部署別ルール</h2>
-    @foreach($departmentRules as $dr)
+    <h2 class="text-lg font-semibold mb-4">職種グループ別ルール</h2>
+    @foreach($jobGroupRules as $jgr)
         <div class="border rounded p-4 mb-4">
             <div class="flex justify-between items-center mb-3">
-                <span class="font-medium">{{ $dr->department?->name ?? '不明' }}</span>
-                <form method="POST" action="{{ route('admin.settings.destroy', $dr) }}" onsubmit="return confirm('削除しますか？')">
+                <span class="font-medium">{{ $jgr->jobGroup?->name ?? '不明' }}</span>
+                <form method="POST" action="{{ route('admin.settings.destroy', $jgr) }}" onsubmit="return confirm('削除しますか？')">
                     @csrf @method('DELETE')
                     <button type="submit" class="text-red-600 text-xs hover:underline">削除</button>
                 </form>
             </div>
-            <form method="POST" action="{{ route('admin.settings.upsertDepartment') }}">
+            <form method="POST" action="{{ route('admin.settings.upsertJobGroup') }}">
                 @csrf
-                <input type="hidden" name="department_id" value="{{ $dr->department_id }}">
-                @include('admin.settings._rule_form', ['rule' => $dr])
+                <input type="hidden" name="job_group_id" value="{{ $jgr->job_group_id }}">
+                @include('admin.settings._rule_form', ['rule' => $jgr])
                 <button type="submit" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">保存</button>
             </form>
         </div>
     @endforeach
 
     <details class="mt-4">
-        <summary class="cursor-pointer text-indigo-600 text-sm">部署ルールを追加</summary>
-        <form method="POST" action="{{ route('admin.settings.upsertDepartment') }}" class="mt-3 border rounded p-4">
+        <summary class="cursor-pointer text-indigo-600 text-sm">職種グループルールを追加</summary>
+        <form method="POST" action="{{ route('admin.settings.upsertJobGroup') }}" class="mt-3 border rounded p-4">
             @csrf
             <div class="mb-4">
-                <label class="text-sm text-gray-600">部署</label>
-                <select name="department_id" class="w-full border rounded px-3 py-2 text-sm" required>
+                <label class="text-sm text-gray-600">職種グループ</label>
+                <select name="job_group_id" class="w-full border rounded px-3 py-2 text-sm" required>
                     <option value="">選択してください</option>
-                    @foreach($departments as $dept)
-                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                    @foreach($jobGroups as $jg)
+                        <option value="{{ $jg->id }}">{{ $jg->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -101,6 +101,7 @@
             <tr>
                 <th class="px-3 py-2 text-left">名前</th>
                 <th class="px-3 py-2 text-left">部署</th>
+                <th class="px-3 py-2 text-left">職種グループ</th>
                 <th class="px-3 py-2 text-left">適用元</th>
                 <th class="px-3 py-2 text-left">始業</th>
                 <th class="px-3 py-2 text-left">終業</th>
@@ -113,6 +114,7 @@
             <tr>
                 <td class="px-3 py-2">{{ $item['user']->name }}</td>
                 <td class="px-3 py-2 text-gray-500">{{ $item['user']->department?->name ?? '-' }}</td>
+                <td class="px-3 py-2 text-gray-500">{{ $item['user']->resolvedJobGroup()?->name ?? '-' }}</td>
                 <td class="px-3 py-2"><span class="text-xs px-2 py-0.5 rounded bg-gray-100">{{ $item['rule']['source'] }}</span></td>
                 <td class="px-3 py-2 font-mono">{{ $item['rule']['work_start_time'] }}</td>
                 <td class="px-3 py-2 font-mono">{{ $item['rule']['work_end_time'] }}</td>
