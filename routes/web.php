@@ -7,6 +7,8 @@ use App\Http\Controllers\BreakController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QrController;
+use App\Http\Controllers\QrScannerController;
 use Illuminate\Support\Facades\Route;
 
 // ルートリダイレクト
@@ -31,6 +33,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/attendance/break-start', [BreakController::class, 'start'])->name('attendance.breakStart');
     Route::post('/attendance/break-end', [BreakController::class, 'end'])->name('attendance.breakEnd');
 
+    // QRコード表示（スマホ用）
+    Route::get('/qr', [QrController::class, 'show'])->name('qr.show');
+    Route::post('/qr/regenerate', [QrController::class, 'regenerate'])->name('qr.regenerate');
+
     // プロフィール
     Route::get('/dashboard/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/dashboard/profile', [ProfileController::class, 'updateName'])->name('profile.updateName');
@@ -53,6 +59,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/users/{user}/reset-pin', [Admin\UserController::class, 'resetPin'])->name('admin.users.resetPin');
         Route::delete('/users/{user}/pin', [Admin\UserController::class, 'clearPin'])->name('admin.users.clearPin');
         Route::post('/users/bulk-generate-pins', [Admin\UserController::class, 'bulkGeneratePins'])->name('admin.users.bulkGeneratePins');
+        Route::post('/users/{user}/reset-qr', [Admin\UserController::class, 'resetQrToken'])->name('admin.users.resetQrToken');
+        Route::delete('/users/{user}/qr', [Admin\UserController::class, 'clearQrToken'])->name('admin.users.clearQrToken');
 
         // 職種グループ管理
         Route::get('/job-groups', [Admin\JobGroupController::class, 'index'])->name('admin.job-groups.index');
@@ -91,6 +99,8 @@ Route::middleware('auth')->group(function () {
 // キオスク（認証不要）
 Route::prefix('kiosk')->group(function () {
     Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
+    Route::get('/{department}/qr', [QrScannerController::class, 'index'])->name('kiosk.qr');
+    Route::post('/qr-verify', [QrScannerController::class, 'verify'])->name('kiosk.qrVerify');
     Route::get('/{department}', [KioskController::class, 'department'])->name('kiosk.department');
     Route::post('/{department}/lookup', [KioskController::class, 'lookup'])->name('kiosk.lookup');
     Route::post('/{department}/clock-in', [KioskController::class, 'clockIn'])->name('kiosk.clockIn');

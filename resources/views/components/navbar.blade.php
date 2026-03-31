@@ -6,6 +6,7 @@
                 <a href="{{ route('dashboard') }}" class="text-sm {{ request()->routeIs('dashboard') ? 'text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-900' }}">ダッシュボード</a>
                 <a href="{{ route('dashboard.history') }}" class="text-sm {{ request()->routeIs('dashboard.history') ? 'text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-900' }}">勤怠履歴</a>
                 <a href="{{ route('profile.show') }}" class="text-sm {{ request()->routeIs('profile.show') ? 'text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-900' }}">プロフィール</a>
+                <a href="{{ route('qr.show') }}" class="text-sm {{ request()->routeIs('qr.show') ? 'text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-900' }}">QRコード</a>
                 @if(auth()->user()->isAdminOrManager())
                     <span class="text-gray-300">|</span>
                     <a href="{{ auth()->user()->isAdmin() ? route('admin.users.index') : route('admin.attendance.index') }}" class="text-sm {{ request()->is('admin/*') ? 'text-red-600 font-semibold' : 'text-gray-600 hover:text-gray-900' }}">管理画面</a>

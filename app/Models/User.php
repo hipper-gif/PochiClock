@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'kiosk_code',
+        'qr_token',
         'role',
         'is_active',
         'department_id',
@@ -93,5 +95,18 @@ class User extends Authenticatable
     public function isAdminOrManager(): bool
     {
         return in_array($this->role, [Role::ADMIN, Role::MANAGER]);
+    }
+
+    public function generateQrToken(): string
+    {
+        $this->qr_token = Str::random(32);
+        $this->save();
+
+        return $this->qr_token;
+    }
+
+    public function getQrCodeUrl(): string
+    {
+        return config('app.url') . '/qr-verify/' . $this->qr_token;
     }
 }
