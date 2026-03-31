@@ -77,6 +77,26 @@ class TimeService
         ];
     }
 
+    /**
+     * Sum working minutes across all sessions for a day.
+     */
+    public function calculateDailyWorkingMinutes(Collection $attendances, array $rounding): int
+    {
+        $total = 0;
+        foreach ($attendances as $attendance) {
+            if ($attendance->clock_out) {
+                $minutes = $this->calculateWorkingMinutesWithRounding(
+                    $attendance->clock_in,
+                    $attendance->clock_out,
+                    $attendance->breakRecords,
+                    $rounding
+                );
+                $total += $minutes ?? 0;
+            }
+        }
+        return $total;
+    }
+
     public function detectAttendanceAlerts(Carbon $clockIn, ?Carbon $clockOut, array $rule): array
     {
         $alerts = [];
