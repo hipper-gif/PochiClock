@@ -40,7 +40,7 @@
             @php
                 $rule = app(\App\Services\WorkRuleService::class)->resolve($u->id);
                 $rounding = ['rounding_unit' => $rule['rounding_unit'], 'clock_in_rounding' => $rule['clock_in_rounding'], 'clock_out_rounding' => $rule['clock_out_rounding']];
-                $workDays = $userAttendances->filter(fn($a) => $a->clock_out)->count();
+                $workDays = $userAttendances->filter(fn($a) => $a->clock_out)->groupBy(fn($a) => $a->clock_in->toDateString())->count();
                 $totalWork = 0;
                 foreach ($userAttendances as $a) {
                     if ($a->clock_out) {
@@ -56,6 +56,7 @@
             <thead>
                 <tr class="border-b text-gray-500 text-xs">
                     <th class="px-3 py-2 text-left">日付</th>
+                    <th class="px-3 py-2 text-left">回</th>
                     <th class="px-3 py-2 text-left">出勤</th>
                     <th class="px-3 py-2 text-left">退勤</th>
                     <th class="px-3 py-2 text-left">休憩</th>
@@ -68,6 +69,7 @@
                 @foreach($userAttendances as $att)
                 <tr>
                     <td class="px-3 py-2 font-mono">{{ $att->clock_in->format('m/d') }}</td>
+                    <td class="px-3 py-2 font-mono text-gray-400">{{ $att->session_number > 1 ? $att->session_number : '' }}</td>
                     <td class="px-3 py-2 font-mono">{{ $att->clock_in->format('H:i') }}</td>
                     <td class="px-3 py-2 font-mono">{{ $att->clock_out?->format('H:i') ?? '-' }}</td>
                     <td class="px-3 py-2 font-mono">{{ app(\App\Services\TimeService::class)->calculateBreakMinutes($att->breakRecords) }}分</td>
@@ -82,7 +84,7 @@
                     </td>
                 </tr>
                 <tr id="edit-{{ $att->id }}" class="hidden bg-gray-50">
-                    <td colspan="7" class="px-3 py-3">
+                    <td colspan="8" class="px-3 py-3">
                         <form method="POST" action="{{ route('admin.attendance.update', $att) }}" class="flex items-end space-x-3">
                             @csrf @method('PUT')
                             <div>
@@ -92,6 +94,10 @@
                             <div>
                                 <label class="text-xs text-gray-500">退勤</label>
                                 <input type="datetime-local" name="clock_out" value="{{ $att->clock_out?->format('Y-m-d\TH:i') }}" class="text-sm border rounded px-2 py-1">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">回</label>
+                                <input type="number" name="session_number" value="{{ $att->session_number }}" min="1" max="10" class="text-sm border rounded px-2 py-1 w-16">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">備考</label>

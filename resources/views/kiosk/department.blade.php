@@ -34,10 +34,12 @@
             <p class="mt-4">
                 <span id="statusBadge" class="px-4 py-1 rounded-full text-sm"></span>
             </p>
+            <p class="mt-2 text-gray-400 text-sm hidden" id="sessionInfo"></p>
         </div>
 
         <div class="grid grid-cols-2 gap-4 max-w-md mx-auto mb-8">
             <button id="clockInBtn" onclick="doClockIn()" class="bg-green-600 hover:bg-green-700 rounded-xl py-6 text-xl font-bold transition hidden">出勤</button>
+            <button id="nextSessionBtn" onclick="doClockIn()" class="bg-green-600 hover:bg-green-700 rounded-xl py-6 text-xl font-bold transition hidden col-span-2">次のセッションの出勤</button>
             <button id="clockOutBtn" onclick="doClockOut()" class="bg-red-600 hover:bg-red-700 rounded-xl py-6 text-xl font-bold transition hidden">退勤</button>
         </div>
 
@@ -58,6 +60,7 @@ const deptId = '{{ $department->id }}';
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 let code = '';
 let currentUserId = null;
+let sessionData = null;
 
 function updateDisplay() {
     const display = code.padEnd(4, '_').split('').join('');
@@ -99,6 +102,7 @@ async function lookup() {
     }
 
     currentUserId = data.user.id;
+    sessionData = data.session;
     document.getElementById('userName').textContent = data.user.name;
     document.getElementById('userNumber').textContent = data.user.employee_number;
 
@@ -113,8 +117,37 @@ async function lookup() {
     badge.textContent = label;
     badge.style.cssText = style;
 
-    document.getElementById('clockInBtn').classList.toggle('hidden', data.status !== 'not_started');
-    document.getElementById('clockOutBtn').classList.toggle('hidden', data.status !== 'clocked_in' && data.status !== 'on_break');
+    // Session info display
+    const sessionInfoEl = document.getElementById('sessionInfo');
+    if (sessionData && sessionData.total > 0) {
+        if (sessionData.current) {
+            sessionInfoEl.textContent = `セッション${sessionData.current} / 本日${sessionData.total}回`;
+        } else {
+            sessionInfoEl.textContent = `本日${sessionData.total}回打刻済み`;
+        }
+        sessionInfoEl.classList.remove('hidden');
+    } else {
+        sessionInfoEl.classList.add('hidden');
+    }
+
+    // Button visibility
+    const clockInBtn = document.getElementById('clockInBtn');
+    const nextSessionBtn = document.getElementById('nextSessionBtn');
+    const clockOutBtn = document.getElementById('clockOutBtn');
+
+    clockInBtn.classList.add('hidden');
+    nextSessionBtn.classList.add('hidden');
+    clockOutBtn.classList.add('hidden');
+
+    if (data.status === 'not_started') {
+        clockInBtn.classList.remove('hidden');
+    } else if (data.status === 'clocked_out' && sessionData && sessionData.allow_multiple) {
+        nextSessionBtn.classList.remove('hidden');
+    }
+
+    if (data.status === 'clocked_in' || data.status === 'on_break') {
+        clockOutBtn.classList.remove('hidden');
+    }
 
     document.getElementById('inputPhase').classList.add('hidden');
     document.getElementById('actionPhase').classList.remove('hidden');
@@ -150,6 +183,7 @@ function showDone(msg) {
 function resetKiosk() {
     code = '';
     currentUserId = null;
+    sessionData = null;
     updateDisplay();
     document.getElementById('errorMsg').classList.add('hidden');
     document.getElementById('inputPhase').classList.remove('hidden');

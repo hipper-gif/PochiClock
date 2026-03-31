@@ -37,8 +37,17 @@ class AttendanceController extends Controller
             }
         }
 
+        $sessionNumber = 1;
+        if ($rule['allow_multiple_clock_ins']) {
+            $maxSession = Attendance::where('user_id', $user->id)
+                ->whereDate('clock_in', $today)
+                ->max('session_number');
+            $sessionNumber = ($maxSession ?? 0) + 1;
+        }
+
         Attendance::create([
             'user_id' => $user->id,
+            'session_number' => $sessionNumber,
             'clock_in' => Carbon::now(),
             'clock_in_lat' => $request->input('latitude'),
             'clock_in_lng' => $request->input('longitude'),

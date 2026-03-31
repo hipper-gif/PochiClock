@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Traits\Auditable;
 use App\Traits\BelongsToTenant;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +18,7 @@ class Attendance extends Model
     protected $fillable = [
         'tenant_id',
         'user_id',
+        'session_number',
         'clock_in',
         'clock_out',
         'note',
@@ -46,5 +49,15 @@ class Attendance extends Model
     public function getActiveBreakAttribute(): ?BreakRecord
     {
         return $this->breakRecords->whereNull('break_end')->first();
+    }
+
+    public function scopeForDate(Builder $query, $date): Builder
+    {
+        return $query->whereDate('clock_in', Carbon::parse($date)->toDateString());
+    }
+
+    public function scopeForToday(Builder $query): Builder
+    {
+        return $query->whereDate('clock_in', Carbon::today());
     }
 }

@@ -44,20 +44,24 @@ class KioskController extends Controller
         }
 
         $today = Carbon::today();
-        $attendance = Attendance::where('user_id', $user->id)
+        $rule = $this->workRuleService->resolve($user->id);
+
+        $todayAttendances = Attendance::where('user_id', $user->id)
             ->whereDate('clock_in', $today)
             ->with('breakRecords')
             ->orderBy('clock_in', 'desc')
-            ->first();
+            ->get();
+
+        $attendance = $todayAttendances->first();
+        $totalSessions = $todayAttendances->count();
+        $activeSession = $todayAttendances->whereNull('clock_out')->first();
 
         $status = 'not_started';
-        if ($attendance) {
-            if (!$attendance->clock_out) {
-                $activeBreak = $attendance->breakRecords->whereNull('break_end')->first();
-                $status = $activeBreak ? 'on_break' : 'clocked_in';
-            } else {
-                $status = 'clocked_out';
-            }
+        if ($activeSession) {
+            $activeBreak = $activeSession->breakRecords->whereNull('break_end')->first();
+            $status = $activeBreak ? 'on_break' : 'clocked_in';
+        } elseif ($attendance) {
+            $status = 'clocked_out';
         }
 
         return response()->json([
@@ -68,6 +72,11 @@ class KioskController extends Controller
                 'employee_number' => $user->employee_number,
             ],
             'status' => $status,
+            'session' => [
+                'current' => $activeSession ? $activeSession->session_number : null,
+                'total' => $totalSessions,
+                'allow_multiple' => (bool) $rule['allow_multiple_clock_ins'],
+            ],
         ]);
     }
 
@@ -98,8 +107,17 @@ class KioskController extends Controller
             }
         }
 
+        $sessionNumber = 1;
+        if ($rule['allow_multiple_clock_ins']) {
+            $maxSession = Attendance::where('user_id', $user->id)
+                ->whereDate('clock_in', $today)
+                ->max('session_number');
+            $sessionNumber = ($maxSession ?? 0) + 1;
+        }
+
         Attendance::create([
             'user_id' => $user->id,
+            'session_number' => $sessionNumber,
             'clock_in' => Carbon::now(),
         ]);
 

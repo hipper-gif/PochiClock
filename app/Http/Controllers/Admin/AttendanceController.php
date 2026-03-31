@@ -67,15 +67,22 @@ class AttendanceController extends Controller
         $request->validate([
             'clock_in' => 'required|date',
             'clock_out' => 'nullable|date|after:clock_in',
+            'session_number' => 'nullable|integer|min:1|max:10',
             'note' => 'nullable|string|max:500',
             'reason' => 'nullable|string|max:500',
         ]);
 
-        $attendance->update([
+        $data = [
             'clock_in' => $request->clock_in,
             'clock_out' => $request->clock_out ?: null,
             'note' => $request->note,
-        ]);
+        ];
+
+        if ($request->filled('session_number')) {
+            $data['session_number'] = $request->session_number;
+        }
+
+        $attendance->update($data);
 
         // Set reason on the audit log
         if ($request->filled('reason')) {
@@ -120,7 +127,7 @@ class AttendanceController extends Controller
             $file = fopen('php://output', 'w');
             // BOM for UTF-8
             fwrite($file, "\xEF\xBB\xBF");
-            fputcsv($file, ['社員番号', '名前', '部署', '日付', '出勤', '退勤', '休憩(分)', '実働(分)', '備考']);
+            fputcsv($file, ['社員番号', '名前', '部署', '日付', '回', '出勤', '退勤', '休憩(分)', '実働(分)', '備考']);
 
             foreach ($attendances as $att) {
                 $rule = app(WorkRuleService::class)->resolve($att->user_id);
@@ -139,6 +146,7 @@ class AttendanceController extends Controller
                     $att->user->name,
                     $att->user->department?->name ?? '',
                     $att->clock_in->format('Y-m-d'),
+                    $att->session_number,
                     $att->clock_in->format('H:i'),
                     $att->clock_out?->format('H:i') ?? '',
                     $breakMin,

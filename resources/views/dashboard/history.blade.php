@@ -41,6 +41,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-4 py-3 text-left text-gray-600">日付</th>
+                    <th class="px-4 py-3 text-left text-gray-600">回</th>
                     <th class="px-4 py-3 text-left text-gray-600">出勤</th>
                     <th class="px-4 py-3 text-left text-gray-600">退勤</th>
                     <th class="px-4 py-3 text-left text-gray-600">休憩</th>
@@ -50,24 +51,48 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-                @forelse($records as $record)
+                @forelse($groupedRecords as $date => $dayRecords)
                     @php
-                        $rounded = app(\App\Services\TimeService::class)->getRoundedTimes($record->clock_in, $record->clock_out, $rounding);
-                        $breakMin = app(\App\Services\TimeService::class)->calculateBreakMinutes($record->breakRecords);
-                        $bindMin = $rounded['rounded_clock_out'] ? $rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']) : null;
-                        $workMin = $bindMin !== null ? max(0, $bindMin - $breakMin) : null;
+                        $dayTotalWorkMin = 0;
+                        $dayTotalBindMin = 0;
+                        $dayTotalBreakMin = 0;
                     @endphp
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 font-mono">{{ $record->clock_in->format('m/d') }}<span class="text-gray-400 ml-1">{{ $record->clock_in->isoFormat('ddd') }}</span></td>
-                        <td class="px-4 py-3 font-mono">{{ $rounded['rounded_clock_in']->format('H:i') }}</td>
-                        <td class="px-4 py-3 font-mono">{{ $rounded['rounded_clock_out'] ? $rounded['rounded_clock_out']->format('H:i') : '--:--' }}</td>
-                        <td class="px-4 py-3 font-mono">{{ $breakMin > 0 ? floor($breakMin / 60) . ':' . str_pad($breakMin % 60, 2, '0', STR_PAD_LEFT) : '-' }}</td>
-                        <td class="px-4 py-3 font-mono">{{ $bindMin !== null ? floor($bindMin / 60) . ':' . str_pad($bindMin % 60, 2, '0', STR_PAD_LEFT) : '-' }}</td>
-                        <td class="px-4 py-3 font-mono">{{ $workMin !== null ? floor($workMin / 60) . ':' . str_pad($workMin % 60, 2, '0', STR_PAD_LEFT) : '-' }}</td>
-                        <td class="px-4 py-3 text-gray-500">{{ $record->note ?? '' }}</td>
-                    </tr>
+                    @foreach($dayRecords as $record)
+                        @php
+                            $rounded = app(\App\Services\TimeService::class)->getRoundedTimes($record->clock_in, $record->clock_out, $rounding);
+                            $breakMin = app(\App\Services\TimeService::class)->calculateBreakMinutes($record->breakRecords);
+                            $bindMin = $rounded['rounded_clock_out'] ? $rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']) : null;
+                            $workMin = $bindMin !== null ? max(0, $bindMin - $breakMin) : null;
+                            if ($bindMin !== null) {
+                                $dayTotalBindMin += $bindMin;
+                                $dayTotalBreakMin += $breakMin;
+                                $dayTotalWorkMin += $workMin;
+                            }
+                        @endphp
+                        <tr class="hover:bg-gray-50">
+                            @if($loop->first)
+                                <td class="px-4 py-3 font-mono" rowspan="{{ $dayRecords->count() }}">{{ $record->clock_in->format('m/d') }}<span class="text-gray-400 ml-1">{{ $record->clock_in->isoFormat('ddd') }}</span></td>
+                            @endif
+                            <td class="px-4 py-3 font-mono text-gray-400">{{ $dayRecords->count() > 1 ? $record->session_number : '' }}</td>
+                            <td class="px-4 py-3 font-mono">{{ $rounded['rounded_clock_in']->format('H:i') }}</td>
+                            <td class="px-4 py-3 font-mono">{{ $rounded['rounded_clock_out'] ? $rounded['rounded_clock_out']->format('H:i') : '--:--' }}</td>
+                            <td class="px-4 py-3 font-mono">{{ $breakMin > 0 ? floor($breakMin / 60) . ':' . str_pad($breakMin % 60, 2, '0', STR_PAD_LEFT) : '-' }}</td>
+                            <td class="px-4 py-3 font-mono">{{ $bindMin !== null ? floor($bindMin / 60) . ':' . str_pad($bindMin % 60, 2, '0', STR_PAD_LEFT) : '-' }}</td>
+                            <td class="px-4 py-3 font-mono">{{ $workMin !== null ? floor($workMin / 60) . ':' . str_pad($workMin % 60, 2, '0', STR_PAD_LEFT) : '-' }}</td>
+                            <td class="px-4 py-3 text-gray-500">{{ $record->note ?? '' }}</td>
+                        </tr>
+                    @endforeach
+                    {{-- 日別小計（複数セッションの場合のみ） --}}
+                    @if($dayRecords->count() > 1)
+                        <tr class="bg-gray-50 border-t border-gray-200">
+                            <td class="px-4 py-2 text-right text-xs text-gray-500" colspan="5">日計</td>
+                            <td class="px-4 py-2 font-mono text-xs font-semibold">{{ floor($dayTotalBindMin / 60) }}:{{ str_pad($dayTotalBindMin % 60, 2, '0', STR_PAD_LEFT) }}</td>
+                            <td class="px-4 py-2 font-mono text-xs font-semibold">{{ floor($dayTotalWorkMin / 60) }}:{{ str_pad($dayTotalWorkMin % 60, 2, '0', STR_PAD_LEFT) }}</td>
+                            <td></td>
+                        </tr>
+                    @endif
                 @empty
-                    <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">この月の勤怠データはありません</td></tr>
+                    <tr><td colspan="8" class="px-4 py-8 text-center text-gray-400">この月の勤怠データはありません</td></tr>
                 @endforelse
             </tbody>
         </table>
