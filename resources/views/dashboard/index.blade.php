@@ -2,9 +2,29 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto">
+
+    {{-- PWA インストールバナー --}}
+    <div id="install-banner" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-indigo-800">ホーム画面に追加</p>
+                <p class="text-xs text-indigo-600">ワンタップで打刻できるようになります</p>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="installPwa()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded">追加</button>
+                <button onclick="dismissInstall()" class="px-3 py-1 text-indigo-600 text-sm">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800">おはようございます、{{ $user->name }} さん</h1>
         <p class="text-gray-500 mt-1">{{ now()->isoFormat('Y年M月D日（ddd）') }}</p>
+    </div>
+
+    {{-- 現在時刻 --}}
+    <div class="text-center mb-6">
+        <p id="current-time" class="text-5xl font-mono font-bold text-gray-800 tabular-nums">--:--:--</p>
     </div>
 
     {{-- ステータス --}}
@@ -69,6 +89,14 @@
     </div>
     @endif
 
+    {{-- GPS ステータス --}}
+    <div id="gps-status" class="hidden mb-4 text-center">
+        <span id="gps-indicator" class="inline-flex items-center px-3 py-1 rounded-full text-xs">
+            <span id="gps-dot" class="w-2 h-2 rounded-full mr-1.5"></span>
+            <span id="gps-text"></span>
+        </span>
+    </div>
+
     {{-- 打刻ボタン --}}
     <div class="grid grid-cols-2 gap-4">
         @if($status === 'not_started')
@@ -76,7 +104,7 @@
                 @csrf
                 <input type="hidden" name="latitude" id="clockInLat">
                 <input type="hidden" name="longitude" id="clockInLng">
-                <button type="submit" class="w-full py-4 bg-green-600 text-white text-xl font-bold rounded-lg hover:bg-green-700 transition">
+                <button type="button" onclick="getLocationAndSubmit('clockInForm')" class="w-full py-5 bg-green-600 text-white text-xl font-bold rounded-lg hover:bg-green-700 active:bg-green-800 transition min-h-[56px]">
                     出勤
                 </button>
             </form>
@@ -85,7 +113,7 @@
                 @csrf
                 <input type="hidden" name="latitude" id="breakStartLat">
                 <input type="hidden" name="longitude" id="breakStartLng">
-                <button type="submit" class="w-full py-4 bg-yellow-500 text-white text-xl font-bold rounded-lg hover:bg-yellow-600 transition">
+                <button type="button" onclick="getLocationAndSubmit('breakStartForm')" class="w-full py-5 bg-yellow-500 text-white text-xl font-bold rounded-lg hover:bg-yellow-600 active:bg-yellow-700 transition min-h-[56px]">
                     休憩開始
                 </button>
             </form>
@@ -93,7 +121,7 @@
                 @csrf
                 <input type="hidden" name="latitude" id="clockOutLat">
                 <input type="hidden" name="longitude" id="clockOutLng">
-                <button type="submit" class="w-full py-4 bg-red-600 text-white text-xl font-bold rounded-lg hover:bg-red-700 transition">
+                <button type="button" onclick="getLocationAndSubmit('clockOutForm')" class="w-full py-5 bg-red-600 text-white text-xl font-bold rounded-lg hover:bg-red-700 active:bg-red-800 transition min-h-[56px]">
                     退勤
                 </button>
             </form>
@@ -102,7 +130,7 @@
                 @csrf
                 <input type="hidden" name="latitude" id="breakEndLat">
                 <input type="hidden" name="longitude" id="breakEndLng">
-                <button type="submit" class="w-full py-4 bg-yellow-600 text-white text-xl font-bold rounded-lg hover:bg-yellow-700 transition">
+                <button type="button" onclick="getLocationAndSubmit('breakEndForm')" class="w-full py-5 bg-yellow-600 text-white text-xl font-bold rounded-lg hover:bg-yellow-700 active:bg-yellow-800 transition min-h-[56px]">
                     休憩終了
                 </button>
             </form>
@@ -115,17 +143,112 @@
 </div>
 
 <script>
+// 現在時刻の表示
+function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('current-time').textContent = h + ':' + m + ':' + s;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// GPS取得してからフォーム送信
+function getLocationAndSubmit(formId) {
+    const form = document.getElementById(formId);
+    const btn = form.querySelector('button');
+    const originalText = btn.textContent;
+
+    if ('geolocation' in navigator) {
+        btn.disabled = true;
+        btn.textContent = '位置情報を取得中...';
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                // フォーム内のhidden inputに座標をセット
+                const latInput = form.querySelector('input[name="latitude"]');
+                const lngInput = form.querySelector('input[name="longitude"]');
+                if (latInput) latInput.value = position.coords.latitude;
+                if (lngInput) lngInput.value = position.coords.longitude;
+                form.submit();
+            },
+            function(error) {
+                // GPS取得失敗でも打刻は実行する
+                form.submit();
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+        );
+    } else {
+        form.submit();
+    }
+}
+
+// GPS状態の表示（ページ読み込み時）
 document.addEventListener('DOMContentLoaded', function() {
-    if (navigator.geolocation) {
+    var gpsStatus = document.getElementById('gps-status');
+    var gpsDot = document.getElementById('gps-dot');
+    var gpsText = document.getElementById('gps-text');
+    var gpsIndicator = document.getElementById('gps-indicator');
+
+    if ('geolocation' in navigator) {
+        gpsStatus.classList.remove('hidden');
+        gpsDot.classList.add('bg-yellow-400');
+        gpsIndicator.classList.add('bg-yellow-50', 'text-yellow-700');
+        gpsText.textContent = 'GPS確認中...';
+
         navigator.geolocation.getCurrentPosition(
             function(pos) {
-                document.querySelectorAll('[id$="Lat"]').forEach(el => el.value = pos.coords.latitude);
-                document.querySelectorAll('[id$="Lng"]').forEach(el => el.value = pos.coords.longitude);
+                // バックグラウンドで全フォームの座標を事前セット
+                document.querySelectorAll('input[name="latitude"]').forEach(function(el) { el.value = pos.coords.latitude; });
+                document.querySelectorAll('input[name="longitude"]').forEach(function(el) { el.value = pos.coords.longitude; });
+
+                gpsDot.classList.remove('bg-yellow-400');
+                gpsDot.classList.add('bg-green-500');
+                gpsIndicator.classList.remove('bg-yellow-50', 'text-yellow-700');
+                gpsIndicator.classList.add('bg-green-50', 'text-green-700');
+                gpsText.textContent = 'GPS取得済み';
             },
-            function() {},
+            function() {
+                gpsDot.classList.remove('bg-yellow-400');
+                gpsDot.classList.add('bg-red-400');
+                gpsIndicator.classList.remove('bg-yellow-50', 'text-yellow-700');
+                gpsIndicator.classList.add('bg-red-50', 'text-red-700');
+                gpsText.textContent = 'GPS取得できません';
+            },
             { timeout: 10000, enableHighAccuracy: true }
         );
     }
 });
+
+// PWA インストールプロンプト
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // 以前に閉じていなければバナーを表示
+    if (!localStorage.getItem('pwa-install-dismissed')) {
+        document.getElementById('install-banner').classList.remove('hidden');
+    }
+});
+
+function installPwa() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(choiceResult) {
+            if (choiceResult.outcome === 'accepted') {
+                document.getElementById('install-banner').classList.add('hidden');
+            }
+            deferredPrompt = null;
+        });
+    }
+}
+
+function dismissInstall() {
+    document.getElementById('install-banner').classList.add('hidden');
+    localStorage.setItem('pwa-install-dismissed', '1');
+}
 </script>
 @endsection
