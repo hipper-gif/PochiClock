@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:ADMIN')->prefix('admin')->group(function () {
         Route::get('/', fn () => redirect()->route('admin.users.index'));
 
-        // ユーザー管理（admin専用）
+        // ユーザー管理
         Route::get('/users', [Admin\UserController::class, 'index'])->name('admin.users.index');
         Route::get('/users/create', [Admin\UserController::class, 'create'])->name('admin.users.create');
         Route::post('/users', [Admin\UserController::class, 'store'])->name('admin.users.store');
@@ -51,18 +51,21 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}/status', [Admin\UserController::class, 'toggleStatus'])->name('admin.users.toggleStatus');
         Route::put('/users/{user}/department', [Admin\UserController::class, 'assignDepartment'])->name('admin.users.assignDepartment');
 
-        // 部署管理（admin専用）
+        // 部署管理
         Route::get('/departments', [Admin\DepartmentController::class, 'index'])->name('admin.departments.index');
         Route::post('/departments', [Admin\DepartmentController::class, 'store'])->name('admin.departments.store');
         Route::put('/departments/{department}', [Admin\DepartmentController::class, 'update'])->name('admin.departments.update');
         Route::delete('/departments/{department}', [Admin\DepartmentController::class, 'destroy'])->name('admin.departments.destroy');
 
-        // 勤務ルール設定（admin専用）
+        // 勤務ルール設定
         Route::get('/settings', [Admin\WorkRuleController::class, 'index'])->name('admin.settings.index');
         Route::post('/settings/system', [Admin\WorkRuleController::class, 'upsertSystem'])->name('admin.settings.upsertSystem');
         Route::post('/settings/department', [Admin\WorkRuleController::class, 'upsertDepartment'])->name('admin.settings.upsertDepartment');
         Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
         Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
+
+        // 監査ログ
+        Route::get('/audit-logs', [Admin\AuditLogController::class, 'index'])->name('admin.audit-logs.index');
     });
 
     // 勤怠管理（admin + manager）

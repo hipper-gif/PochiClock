@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -9,8 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BreakRecord extends Model
 {
-    use HasUuids;
-    use BelongsToTenant;
+    use HasUuids, BelongsToTenant, Auditable;
 
     protected $table = 'break_records';
 

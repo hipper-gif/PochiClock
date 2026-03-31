@@ -68,6 +68,7 @@ class AttendanceController extends Controller
             'clock_in' => 'required|date',
             'clock_out' => 'nullable|date|after:clock_in',
             'note' => 'nullable|string|max:500',
+            'reason' => 'nullable|string|max:500',
         ]);
 
         $attendance->update([
@@ -75,6 +76,11 @@ class AttendanceController extends Controller
             'clock_out' => $request->clock_out ?: null,
             'note' => $request->note,
         ]);
+
+        // Set reason on the audit log
+        if ($request->filled('reason')) {
+            $attendance->auditLogs()->latest()->first()?->update(['reason' => $request->reason]);
+        }
 
         return back()->with('success', '打刻を修正しました');
     }
