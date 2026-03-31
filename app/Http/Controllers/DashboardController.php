@@ -49,11 +49,12 @@ class DashboardController extends Controller
                     'clock_in_rounding' => $rule['clock_in_rounding'],
                     'clock_out_rounding' => $rule['clock_out_rounding'],
                 ];
-                $workingMinutes = $this->timeService->calculateWorkingMinutesWithRounding(
+                $workingMinutes = $this->timeService->calculateWorkingMinutesWithCutoff(
                     $attendance->clock_in,
                     $attendance->clock_out,
                     $attendance->breakRecords,
-                    $rounding
+                    $rounding,
+                    $rule
                 );
             }
 
@@ -66,14 +67,15 @@ class DashboardController extends Controller
 
         $roundedTimes = null;
         if ($attendance) {
-            $roundedTimes = $this->timeService->getRoundedTimes(
+            $roundedTimes = $this->timeService->getRoundedTimesWithCutoff(
                 $attendance->clock_in,
                 $attendance->clock_out,
                 [
                     'rounding_unit' => $rule['rounding_unit'],
                     'clock_in_rounding' => $rule['clock_in_rounding'],
                     'clock_out_rounding' => $rule['clock_out_rounding'],
-                ]
+                ],
+                $rule
             );
         }
 
@@ -113,7 +115,7 @@ class DashboardController extends Controller
         foreach ($records as $record) {
             if ($record->clock_out) {
                 $totalWorkDays++;
-                $rounded = $this->timeService->getRoundedTimes($record->clock_in, $record->clock_out, $rounding);
+                $rounded = $this->timeService->getRoundedTimesWithCutoff($record->clock_in, $record->clock_out, $rounding, $rule);
                 $bindingMin = $rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']);
                 $breakMin = $this->timeService->calculateBreakMinutes($record->breakRecords);
                 $totalBindingMinutes += $bindingMin;

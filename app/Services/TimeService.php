@@ -77,6 +77,85 @@ class TimeService
         ];
     }
 
+    /**
+     * Apply early clock-in cutoff.
+     * If clock-in is before the cutoff time, round it forward to the cutoff.
+     */
+    public function applyEarlyCutoff(Carbon $clockIn, ?string $cutoff, ?string $cutoffPm = null, int $sessionNumber = 1): Carbon
+    {
+        if ($sessionNumber >= 2 && $cutoffPm) {
+            $cutoffTime = $cutoffPm;
+        } elseif ($cutoff) {
+            $cutoffTime = $cutoff;
+        } else {
+            return $clockIn->copy();
+        }
+
+        $cutoffCarbon = $clockIn->copy()->setTimeFromTimeString($cutoffTime);
+
+        if ($clockIn->lt($cutoffCarbon)) {
+            return $cutoffCarbon;
+        }
+
+        return $clockIn->copy();
+    }
+
+    /**
+     * Get effective clock-in time after applying early cutoff.
+     */
+    public function getEffectiveClockIn(Carbon $clockIn, array $rule, int $sessionNumber = 1): Carbon
+    {
+        return $this->applyEarlyCutoff(
+            $clockIn,
+            $rule['early_clock_in_cutoff'] ?? null,
+            $rule['early_clock_in_cutoff_pm'] ?? null,
+            $sessionNumber
+        );
+    }
+
+    /**
+     * Get rounded times with early cutoff applied first.
+     */
+    public function getRoundedTimesWithCutoff(Carbon $clockIn, ?Carbon $clockOut, array $rounding, array $rule, int $sessionNumber = 1): array
+    {
+        $effectiveClockIn = $this->getEffectiveClockIn($clockIn, $rule, $sessionNumber);
+
+        return [
+            'rounded_clock_in' => $this->roundTime($effectiveClockIn, $rounding['rounding_unit'], $rounding['clock_in_rounding']),
+            'rounded_clock_out' => $clockOut
+                ? $this->roundTime($clockOut, $rounding['rounding_unit'], $rounding['clock_out_rounding'])
+                : null,
+            'cutoff_applied' => !$effectiveClockIn->eq($clockIn),
+            'actual_clock_in' => $clockIn->copy(),
+        ];
+    }
+
+    /**
+     * Calculate working minutes with early cutoff and rounding applied.
+     */
+    public function calculateWorkingMinutesWithCutoff(
+        Carbon $clockIn,
+        ?Carbon $clockOut,
+        Collection $breaks,
+        array $rounding,
+        array $rule,
+        int $sessionNumber = 1
+    ): ?int {
+        if (!$clockOut) {
+            return null;
+        }
+
+        $effectiveClockIn = $this->getEffectiveClockIn($clockIn, $rule, $sessionNumber);
+
+        $roundedIn = $this->roundTime($effectiveClockIn, $rounding['rounding_unit'], $rounding['clock_in_rounding']);
+        $roundedOut = $this->roundTime($clockOut, $rounding['rounding_unit'], $rounding['clock_out_rounding']);
+
+        $totalMinutes = $roundedIn->diffInMinutes($roundedOut);
+        $breakMinutes = $this->calculateBreakMinutes($breaks);
+
+        return max(0, $totalMinutes - $breakMinutes);
+    }
+
     public function detectAttendanceAlerts(Carbon $clockIn, ?Carbon $clockOut, array $rule): array
     {
         $alerts = [];

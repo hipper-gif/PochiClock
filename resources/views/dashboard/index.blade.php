@@ -27,6 +27,9 @@
             <div>
                 <p class="text-xs text-gray-500">出勤</p>
                 <p class="text-lg font-mono">{{ $roundedTimes ? $roundedTimes['rounded_clock_in']->format('H:i') : '--:--' }}</p>
+                @if($roundedTimes && ($roundedTimes['cutoff_applied'] ?? false))
+                    <p class="text-xs text-amber-600" title="早出カット適用">実際: {{ $roundedTimes['actual_clock_in']->format('H:i') }}</p>
+                @endif
             </div>
             <div>
                 <p class="text-xs text-gray-500">退勤</p>

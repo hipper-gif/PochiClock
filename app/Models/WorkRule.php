@@ -23,6 +23,8 @@ class WorkRule extends Model
         'rounding_unit',
         'clock_in_rounding',
         'clock_out_rounding',
+        'early_clock_in_cutoff',
+        'early_clock_in_cutoff_pm',
     ];
 
     protected function casts(): array

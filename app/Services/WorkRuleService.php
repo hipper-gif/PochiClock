@@ -17,6 +17,8 @@ class WorkRuleService
         'rounding_unit' => 1,
         'clock_in_rounding' => 'none',
         'clock_out_rounding' => 'none',
+        'early_clock_in_cutoff' => null,
+        'early_clock_in_cutoff_pm' => null,
         'source' => 'DEFAULT',
     ];
 
@@ -65,6 +67,8 @@ class WorkRuleService
             'rounding_unit' => $rule->rounding_unit,
             'clock_in_rounding' => $rule->clock_in_rounding,
             'clock_out_rounding' => $rule->clock_out_rounding,
+            'early_clock_in_cutoff' => $rule->early_clock_in_cutoff,
+            'early_clock_in_cutoff_pm' => $rule->early_clock_in_cutoff_pm,
             'source' => $source,
         ];
     }

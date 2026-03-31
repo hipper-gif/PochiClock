@@ -97,10 +97,14 @@ class WorkRuleController extends Controller
             'clock_out_rounding' => 'required|in:none,ceil,floor',
             'allow_multiple_clock_ins' => 'sometimes|boolean',
             'break_tiers' => 'nullable|json',
+            'early_clock_in_cutoff' => 'nullable|string|size:5|regex:/^\d{2}:\d{2}$/',
+            'early_clock_in_cutoff_pm' => 'nullable|string|size:5|regex:/^\d{2}:\d{2}$/',
         ]);
 
         $validated['allow_multiple_clock_ins'] = $request->boolean('allow_multiple_clock_ins');
         $validated['break_tiers'] = $request->break_tiers ? json_decode($request->break_tiers, true) : null;
+        $validated['early_clock_in_cutoff'] = $validated['early_clock_in_cutoff'] ?: null;
+        $validated['early_clock_in_cutoff_pm'] = $validated['early_clock_in_cutoff_pm'] ?: null;
         $validated['scope'] = $validated['scope'] ?? null;
 
         return collect($validated)->except(['scope'])->toArray();
