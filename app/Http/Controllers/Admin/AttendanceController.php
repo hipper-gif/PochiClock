@@ -72,6 +72,7 @@ class AttendanceController extends Controller
         $year = $request->input('year', Carbon::now()->year);
         $month = $request->input('month', Carbon::now()->month);
         $departmentId = $request->input('department_id');
+        $format = $request->input('format', 'standard');
 
         $startOfMonth = Carbon::create($year, $month, 1)->startOfDay();
         $endOfMonth = $startOfMonth->copy()->endOfMonth()->endOfDay();
@@ -86,44 +87,115 @@ class AttendanceController extends Controller
 
         $attendances = $query->get();
 
-        $filename = "pochiclock_{$year}_{$month}.csv";
+        if ($format === 'tkc') {
+            $filename = "tkc_{$year}_{$month}.csv";
+        } else {
+            $filename = "attendance_{$year}_{$month}.csv";
+        }
+
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function () use ($attendances) {
-            $file = fopen('php://output', 'w');
-            // BOM for UTF-8
-            fwrite($file, "\xEF\xBB\xBF");
-            fputcsv($file, ['社員番号', '名前', '部署', '日付', '出勤', '退勤', '休憩(分)', '実働(分)', '備考']);
-
-            foreach ($attendances as $att) {
-                $rule = app(WorkRuleService::class)->resolve($att->user_id);
-                $rounding = [
-                    'rounding_unit' => $rule['rounding_unit'],
-                    'clock_in_rounding' => $rule['clock_in_rounding'],
-                    'clock_out_rounding' => $rule['clock_out_rounding'],
-                ];
-                $breakMin = app(TimeService::class)->calculateBreakMinutes($att->breakRecords);
-                $workMin = app(TimeService::class)->calculateWorkingMinutesWithRounding(
-                    $att->clock_in, $att->clock_out, $att->breakRecords, $rounding
-                );
-
+        if ($format === 'tkc') {
+            $callback = function () use ($attendances) {
+                $file = fopen('php://output', 'w');
+                fwrite($file, "\xEF\xBB\xBF");
                 fputcsv($file, [
-                    $att->user->employee_number,
-                    $att->user->name,
-                    $att->user->department?->name ?? '',
-                    $att->clock_in->format('Y-m-d'),
-                    $att->clock_in->format('H:i'),
-                    $att->clock_out?->format('H:i') ?? '',
-                    $breakMin,
-                    $workMin ?? '',
-                    $att->note ?? '',
+                    '社員番号',
+                    '氏名',
+                    '所属',
+                    '年月日',
+                    '出勤時刻',
+                    '退勤時刻',
+                    '休憩時間',
+                    '所定内労働時間',
+                    '時間外労働（法定内）',
+                    '時間外労働（法定外）',
+                    '深夜労働',
+                    '有給取得日数',
+                    '備考',
                 ]);
-            }
-            fclose($file);
-        };
+
+                foreach ($attendances as $att) {
+                    $rule = app(WorkRuleService::class)->resolve($att->user_id);
+                    $rounding = [
+                        'rounding_unit' => $rule['rounding_unit'],
+                        'clock_in_rounding' => $rule['clock_in_rounding'],
+                        'clock_out_rounding' => $rule['clock_out_rounding'],
+                    ];
+
+                    $workMin = app(TimeService::class)->calculateWorkingMinutesWithRounding(
+                        $att->clock_in, $att->clock_out, $att->breakRecords, $rounding
+                    );
+                    $breakMin = app(TimeService::class)->calculateBreakMinutes($att->breakRecords);
+
+                    // Standard day minutes from work rule (work_start to work_end minus default break)
+                    [$startH, $startM] = explode(':', $rule['work_start_time']);
+                    [$endH, $endM] = explode(':', $rule['work_end_time']);
+                    $standardDayMinutes = ((int)$endH * 60 + (int)$endM) - ((int)$startH * 60 + (int)$startM) - $rule['default_break_minutes'];
+                    $standardDayMinutes = max(0, $standardDayMinutes);
+
+                    $normalMin = $workMin !== null ? min($workMin, $standardDayMinutes) : 0;
+                    $overtimeMin = $workMin !== null ? max(0, $workMin - $standardDayMinutes) : 0;
+
+                    // Effective clock_in after rounding
+                    $roundedTimes = app(TimeService::class)->getRoundedTimes($att->clock_in, $att->clock_out, $rounding);
+                    $effectiveClockIn = $roundedTimes['rounded_clock_in'];
+
+                    fputcsv($file, [
+                        $att->user->employee_number,
+                        $att->user->name,
+                        $att->user->department?->name ?? '',
+                        $att->clock_in->format('Y/m/d'),
+                        $effectiveClockIn->format('H:i'),
+                        $att->clock_out?->format('H:i') ?? '',
+                        $breakMin,
+                        $normalMin,
+                        0, // 時間外労働（法定内）: not implemented yet
+                        $overtimeMin, // 時間外労働（法定外）
+                        0, // 深夜労働: not implemented yet
+                        0, // 有給取得日数: not implemented yet
+                        $att->note ?? '',
+                    ]);
+                }
+                fclose($file);
+            };
+        } else {
+            $callback = function () use ($attendances) {
+                $file = fopen('php://output', 'w');
+                // BOM for UTF-8
+                fwrite($file, "\xEF\xBB\xBF");
+                fputcsv($file, ['社員番号', '名前', '部署', '日付', '出勤', '退勤', '休憩(分)', '実働(分)', '備考']);
+
+                foreach ($attendances as $att) {
+                    $rule = app(WorkRuleService::class)->resolve($att->user_id);
+                    $rounding = [
+                        'rounding_unit' => $rule['rounding_unit'],
+                        'clock_in_rounding' => $rule['clock_in_rounding'],
+                        'clock_out_rounding' => $rule['clock_out_rounding'],
+                    ];
+                    $breakMin = app(TimeService::class)->calculateBreakMinutes($att->breakRecords);
+                    $workMin = app(TimeService::class)->calculateWorkingMinutesWithRounding(
+                        $att->clock_in, $att->clock_out, $att->breakRecords, $rounding
+                    );
+
+                    fputcsv($file, [
+                        $att->user->employee_number,
+                        $att->user->name,
+                        $att->user->department?->name ?? '',
+                        $att->clock_in->format('Y-m-d'),
+                        $att->clock_in->format('H:i'),
+                        $att->clock_out?->format('H:i') ?? '',
+                        $breakMin,
+                        $workMin ?? '',
+                        $att->note ?? '',
+                    ]);
+                }
+                fclose($file);
+            };
+        }
 
         return response()->stream($callback, 200, $headers);
     }
