@@ -45,6 +45,7 @@
             <a href="{{ route('admin.month-summary.index') }}" class="text-sm {{ request()->routeIs('admin.month-summary.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">月次サマリ</a>
             <a href="{{ route('admin.overtime.index') }}" class="text-sm {{ request()->routeIs('admin.overtime.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">残業管理</a>
             <a href="{{ route('admin.comp-leaves.index') }}" class="text-sm {{ request()->routeIs('admin.comp-leaves.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">振替管理</a>
+            <a href="{{ route('admin.paid-leaves.index') }}" class="text-sm {{ request()->routeIs('admin.paid-leaves.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">有給管理</a>
             <a href="{{ route('admin.alerts.index') }}" class="text-sm {{ request()->routeIs('admin.alerts.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }} inline-flex items-center">
                 アラート
                 @if($totalAlerts > 0)

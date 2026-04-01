@@ -27,7 +27,12 @@ class User extends Authenticatable
         'role',
         'is_active',
         'department_id',
+<<<<<<< HEAD
         'job_group_id',
+=======
+        'hire_date',
+        'weekly_work_days',
+>>>>>>> worktree-agent-a811f450
     ];
 
     protected $hidden = [
@@ -41,6 +46,8 @@ class User extends Authenticatable
             'role' => Role::class,
             'is_active' => 'boolean',
             'password' => 'hashed',
+            'hire_date' => 'date',
+            'weekly_work_days' => 'decimal:1',
         ];
     }
 
@@ -75,6 +82,16 @@ class User extends Authenticatable
     public function workRule(): HasOne
     {
         return $this->hasOne(WorkRule::class);
+    }
+
+    public function paidLeaves(): HasMany
+    {
+        return $this->hasMany(PaidLeave::class);
+    }
+
+    public function paidLeaveBalances(): HasMany
+    {
+        return $this->hasMany(PaidLeaveBalance::class);
     }
 
     public function scopeActive($query)

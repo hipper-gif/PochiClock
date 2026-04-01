@@ -91,6 +91,10 @@ Route::middleware('auth')->group(function () {
 
         // 監査ログ
         Route::get('/audit-logs', [Admin\AuditLogController::class, 'index'])->name('admin.audit-logs.index');
+
+        // 有給管理（admin only）
+        Route::post('/paid-leaves/grant', [Admin\PaidLeaveController::class, 'grant'])->name('admin.paid-leaves.grant');
+        Route::post('/paid-leaves/auto-grant', [Admin\PaidLeaveController::class, 'autoGrant'])->name('admin.paid-leaves.autoGrant');
     });
 
     // 勤怠管理（admin + manager）
@@ -111,6 +115,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/comp-leaves', [Admin\CompLeaveController::class, 'index'])->name('admin.comp-leaves.index');
         Route::post('/comp-leaves', [Admin\CompLeaveController::class, 'store'])->name('admin.comp-leaves.store');
         Route::delete('/comp-leaves/{compLeave}', [Admin\CompLeaveController::class, 'destroy'])->name('admin.comp-leaves.destroy');
+        Route::get('/paid-leaves', [Admin\PaidLeaveController::class, 'index'])->name('admin.paid-leaves.index');
+        Route::post('/paid-leaves/apply', [Admin\PaidLeaveController::class, 'apply'])->name('admin.paid-leaves.apply');
+        Route::put('/paid-leaves/{paidLeave}/approve', [Admin\PaidLeaveController::class, 'approve'])->name('admin.paid-leaves.approve');
+        Route::put('/paid-leaves/{paidLeave}/reject', [Admin\PaidLeaveController::class, 'reject'])->name('admin.paid-leaves.reject');
     });
 });
 
