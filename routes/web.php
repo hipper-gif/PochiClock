@@ -71,6 +71,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/department', [Admin\WorkRuleController::class, 'upsertDepartment'])->name('admin.settings.upsertDepartment');
         Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
         Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
+
+        // シフト管理（admin + manager共用）
+        Route::get('/shifts', [Admin\ShiftController::class, 'index'])->name('admin.shifts.index');
+        Route::post('/shifts/assign', [Admin\ShiftController::class, 'assign'])->name('admin.shifts.assign');
+        Route::post('/shifts/bulk-assign', [Admin\ShiftController::class, 'bulkAssign'])->name('admin.shifts.bulkAssign');
+        Route::delete('/shifts/assignments/{assignment}', [Admin\ShiftController::class, 'removeAssignment'])->name('admin.shifts.removeAssignment');
+
+        // シフトテンプレート管理（admin専用）
+        Route::get('/shifts/templates', [Admin\ShiftController::class, 'templates'])->name('admin.shifts.templates');
+        Route::post('/shifts/templates', [Admin\ShiftController::class, 'storeTemplate'])->name('admin.shifts.storeTemplate');
+        Route::put('/shifts/templates/{template}', [Admin\ShiftController::class, 'updateTemplate'])->name('admin.shifts.updateTemplate');
+        Route::delete('/shifts/templates/{template}', [Admin\ShiftController::class, 'destroyTemplate'])->name('admin.shifts.destroyTemplate');
     });
 });
 
