@@ -94,6 +94,11 @@ Route::middleware('auth')->group(function () {
         Route::put('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'updateBreak'])->name('admin.attendance.updateBreak');
         Route::delete('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'deleteBreak'])->name('admin.attendance.deleteBreak');
     });
+
+    // 管理者・マネージャー共通
+    Route::middleware(['admin.or.manager', 'department.access'])->prefix('admin')->group(function () {
+        Route::get('/month-summary', [Admin\MonthSummaryController::class, 'index'])->name('admin.month-summary.index');
+    });
 });
 
 // キオスク（認証不要）

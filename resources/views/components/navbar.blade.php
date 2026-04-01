@@ -34,6 +34,7 @@
                 <a href="{{ route('admin.job-groups.index') }}" class="text-sm {{ request()->routeIs('admin.job-groups.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">職種グループ</a>
             @endif
             <a href="{{ route('admin.attendance.index') }}" class="text-sm {{ request()->routeIs('admin.attendance.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">勤怠管理</a>
+            <a href="{{ route('admin.month-summary.index') }}" class="text-sm {{ request()->routeIs('admin.month-summary.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">月次サマリ</a>
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('admin.settings.index') }}" class="text-sm {{ request()->routeIs('admin.settings.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">勤務ルール</a>
                 <a href="{{ route('admin.audit-logs.index') }}" class="text-sm {{ request()->routeIs('admin.audit-logs.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">監査ログ</a>
