@@ -3,8 +3,16 @@
 @section('content')
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-800">勤怠管理</h1>
-    <a href="{{ route('admin.attendance.export', ['year' => $year, 'month' => $month, 'department_id' => $departmentId]) }}"
-       class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">CSV出力</a>
+    <form method="GET" action="{{ route('admin.attendance.export') }}" class="flex items-center space-x-2">
+        <input type="hidden" name="year" value="{{ $year }}">
+        <input type="hidden" name="month" value="{{ $month }}">
+        <input type="hidden" name="department_id" value="{{ $departmentId }}">
+        <select name="format" class="text-sm border rounded px-2 py-1">
+            <option value="standard">標準形式</option>
+            <option value="tkc">TKC PX2形式</option>
+        </select>
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm">CSV出力</button>
+    </form>
 </div>
 
 {{-- フィルター --}}
