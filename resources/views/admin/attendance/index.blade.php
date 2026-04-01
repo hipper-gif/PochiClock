@@ -1,6 +1,32 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    try {
+        $counts = app(\App\Services\AlertService::class)->getAlertCounts();
+    } catch (\Throwable $e) {
+        $counts = ['missing_clock_outs' => 0, 'shift_overtime' => 0];
+    }
+@endphp
+@if($counts['missing_clock_outs'] > 0 || $counts['shift_overtime'] > 0)
+<div class="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            @if($counts['missing_clock_outs'] > 0)
+            <span class="text-sm text-red-700">
+                &#9888; 未打刻 {{ $counts['missing_clock_outs'] }}名
+            </span>
+            @endif
+            @if($counts['shift_overtime'] > 0)
+            <span class="text-sm text-amber-700">
+                &#9888; シフト超過 {{ $counts['shift_overtime'] }}名
+            </span>
+            @endif
+        </div>
+        <a href="{{ route('admin.alerts.index') }}" class="text-sm text-red-600 hover:underline">確認する &rarr;</a>
+    </div>
+</div>
+@endif
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-800">勤怠管理</h1>
     <form method="GET" action="{{ route('admin.attendance.export') }}" class="flex items-center space-x-2">

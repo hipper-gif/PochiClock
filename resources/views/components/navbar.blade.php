@@ -27,6 +27,14 @@
         </div>
 
         @if(request()->is('admin/*'))
+        @php
+            try {
+                $alertCounts = app(\App\Services\AlertService::class)->getAlertCounts();
+                $totalAlerts = array_sum($alertCounts);
+            } catch (\Throwable $e) {
+                $totalAlerts = 0;
+            }
+        @endphp
         <div class="flex space-x-6 border-t py-2">
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('admin.users.index') }}" class="text-sm {{ request()->routeIs('admin.users.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">ユーザー</a>
@@ -35,6 +43,12 @@
             @endif
             <a href="{{ route('admin.attendance.index') }}" class="text-sm {{ request()->routeIs('admin.attendance.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">勤怠管理</a>
             <a href="{{ route('admin.month-summary.index') }}" class="text-sm {{ request()->routeIs('admin.month-summary.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">月次サマリ</a>
+            <a href="{{ route('admin.alerts.index') }}" class="text-sm {{ request()->routeIs('admin.alerts.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }} inline-flex items-center">
+                アラート
+                @if($totalAlerts > 0)
+                    <span class="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">{{ $totalAlerts }}</span>
+                @endif
+            </a>
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('admin.settings.index') }}" class="text-sm {{ request()->routeIs('admin.settings.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">勤務ルール</a>
                 <a href="{{ route('admin.audit-logs.index') }}" class="text-sm {{ request()->routeIs('admin.audit-logs.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">監査ログ</a>

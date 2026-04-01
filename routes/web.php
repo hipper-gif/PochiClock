@@ -104,8 +104,9 @@ Route::middleware('auth')->group(function () {
     });
 
     // 管理者・マネージャー共通
-    Route::middleware(['admin.or.manager', 'department.access'])->prefix('admin')->group(function () {
+    Route::middleware(['role:ADMIN,MANAGER', 'department.access'])->prefix('admin')->group(function () {
         Route::get('/month-summary', [Admin\MonthSummaryController::class, 'index'])->name('admin.month-summary.index');
+        Route::get('/alerts', [Admin\AlertController::class, 'index'])->name('admin.alerts.index');
     });
 });
 

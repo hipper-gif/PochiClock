@@ -7,7 +7,19 @@
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l app/Models/Department.php)",
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l app/Models/BreakRecord.php)",
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l routes/web.php)",
+<<<<<<< HEAD
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l bootstrap/app.php)"
+=======
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l bootstrap/app.php)",
+      "Bash(for f:*)",
+      "Bash(do $PHP -l \"$f\")",
+      "Bash(done)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l \"C:\\\\projects\\\\PochiClock\\\\.claude\\\\worktrees\\\\agent-aba749cb\\\\app\\\\Models\\\\AuditLog.php\")",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l \"C:\\\\projects\\\\PochiClock\\\\.claude\\\\worktrees\\\\agent-aba749cb\\\\app\\\\Traits\\\\Auditable.php\")",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l \"C:\\\\projects\\\\PochiClock\\\\.claude\\\\worktrees\\\\agent-aba749cb\\\\app\\\\Http\\\\Controllers\\\\Admin\\\\AttendanceController.php\")",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l \"C:\\\\projects\\\\PochiClock\\\\.claude\\\\worktrees\\\\agent-aba749cb\\\\app\\\\Models\\\\Attendance.php\")",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l \"C:\\\\projects\\\\PochiClock\\\\.claude\\\\worktrees\\\\agent-aba749cb\\\\database\\\\migrations\\\\0001_01_01_000007_create_audit_logs_table.php\")"
+>>>>>>> worktree-agent-a4b5f4b6
     ]
   }
 }
