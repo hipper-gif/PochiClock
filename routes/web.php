@@ -71,6 +71,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/department', [Admin\WorkRuleController::class, 'upsertDepartment'])->name('admin.settings.upsertDepartment');
         Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
         Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
+
+        // 有給管理（admin + manager共通）
+        Route::get('/paid-leaves', [Admin\PaidLeaveController::class, 'index'])->name('admin.paid-leaves.index');
+        Route::post('/paid-leaves/apply', [Admin\PaidLeaveController::class, 'apply'])->name('admin.paid-leaves.apply');
+        Route::put('/paid-leaves/{paidLeave}/approve', [Admin\PaidLeaveController::class, 'approve'])->name('admin.paid-leaves.approve');
+        Route::put('/paid-leaves/{paidLeave}/reject', [Admin\PaidLeaveController::class, 'reject'])->name('admin.paid-leaves.reject');
+
+        // 有給管理（admin only）
+        Route::post('/paid-leaves/grant', [Admin\PaidLeaveController::class, 'grant'])->name('admin.paid-leaves.grant');
+        Route::post('/paid-leaves/auto-grant', [Admin\PaidLeaveController::class, 'autoGrant'])->name('admin.paid-leaves.autoGrant');
     });
 });
 
