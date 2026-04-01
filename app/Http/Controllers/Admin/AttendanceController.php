@@ -35,7 +35,12 @@ class AttendanceController extends Controller
             $departmentId = $currentUser->department_id;
         }
 
-        $query = Attendance::with(['user.department', 'breakRecords'])
+        $query = Attendance::with([
+                'user.department',
+                'breakRecords',
+                'auditLogs' => fn ($q) => $q->where('action', 'updated')->with('user')->latest(),
+            ])
+            ->withCount(['auditLogs as modification_count' => fn ($q) => $q->where('action', 'updated')])
             ->whereBetween('clock_in', [$startOfMonth, $endOfMonth])
             ->orderBy('clock_in');
 
@@ -85,6 +90,10 @@ class AttendanceController extends Controller
         $attendance->update($data);
 
         // Set reason on the audit log
+        if ($request->filled('reason')) {
+            $attendance->auditLogs()->latest()->first()?->update(['reason' => $request->reason]);
+        }
+
         if ($request->filled('reason')) {
             $attendance->auditLogs()->latest()->first()?->update(['reason' => $request->reason]);
         }
