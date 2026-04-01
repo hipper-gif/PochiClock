@@ -67,7 +67,12 @@
             <tbody class="divide-y divide-gray-50">
                 @foreach($userAttendances as $att)
                 <tr>
-                    <td class="px-3 py-2 font-mono">{{ $att->clock_in->format('m/d') }}</td>
+                    <td class="px-3 py-2 font-mono">
+                        {{ $att->clock_in->format('m/d') }}
+                        @if($att->modification_count > 0)
+                            <span class="ml-1 text-xs bg-amber-100 text-amber-700 px-1 rounded">修正済</span>
+                        @endif
+                    </td>
                     <td class="px-3 py-2 font-mono">{{ $att->clock_in->format('H:i') }}</td>
                     <td class="px-3 py-2 font-mono">{{ $att->clock_out?->format('H:i') ?? '-' }}</td>
                     <td class="px-3 py-2 font-mono">{{ app(\App\Services\TimeService::class)->calculateBreakMinutes($att->breakRecords) }}分</td>
@@ -97,8 +102,41 @@
                                 <label class="text-xs text-gray-500">備考</label>
                                 <input type="text" name="note" value="{{ $att->note }}" class="text-sm border rounded px-2 py-1">
                             </div>
+                            <div>
+                                <label class="text-xs text-gray-500">修正理由</label>
+                                <input type="text" name="reason" placeholder="例: 打刻漏れ" class="text-sm border rounded px-2 py-1">
+                            </div>
                             <button type="submit" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">保存</button>
                         </form>
+                        @if($att->auditLogs->isNotEmpty())
+                        <div class="mt-4 border-t pt-3">
+                            <p class="text-xs font-semibold text-gray-600 mb-2">修正履歴</p>
+                            <div class="space-y-1">
+                                @foreach($att->auditLogs as $log)
+                                <div class="text-xs text-gray-500 bg-gray-50 rounded px-2 py-1">
+                                    <span class="font-medium text-gray-700">{{ $log->created_at->format('Y/m/d H:i') }}</span>
+                                    <span class="ml-1">{{ $log->user_name ?? '不明' }}</span>
+                                    @if($log->old_values && $log->new_values)
+                                        @php
+                                            $fieldLabels = ['clock_in' => '出勤', 'clock_out' => '退勤', 'note' => '備考', 'session_number' => '回'];
+                                            $changed = array_intersect_key($log->new_values, $log->old_values ?? []);
+                                        @endphp
+                                        @foreach($changed as $field => $newVal)
+                                            @if(isset($fieldLabels[$field]))
+                                            <span class="ml-1 text-gray-400">{{ $fieldLabels[$field] }}:
+                                                {{ $log->old_values[$field] ?? '-' }} → {{ $newVal ?? '-' }}
+                                            </span>
+                                            @endif
+                                        @endforeach
+                                    @endif
+                                    @if($log->reason)
+                                        <span class="ml-1 text-indigo-600">（{{ $log->reason }}）</span>
+                                    @endif
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
                     </td>
                 </tr>
                 @endforeach
