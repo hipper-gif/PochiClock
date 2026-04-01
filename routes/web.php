@@ -72,6 +72,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
         Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
     });
+
+    // 管理者・マネージャー共通
+    Route::middleware(['admin.or.manager', 'department.access'])->prefix('admin')->group(function () {
+        Route::get('/month-summary', [Admin\MonthSummaryController::class, 'index'])->name('admin.month-summary.index');
+    });
 });
 
 // キオスク（認証不要）
