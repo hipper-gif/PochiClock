@@ -9,12 +9,20 @@ use App\Http\Controllers\KioskController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QrController;
 use App\Http\Controllers\QrScannerController;
+use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
 
 // ルートリダイレクト
 Route::get('/', function () {
+    if (\App\Models\User::count() === 0) {
+        return redirect('/setup');
+    }
     return auth()->check() ? redirect('/dashboard') : redirect('/login');
 });
+
+// 初期セットアップ（ユーザーが0人のときのみ有効）
+Route::get('/setup', [SetupController::class, 'index'])->name('setup.index');
+Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
 
 // 認証
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
