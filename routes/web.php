@@ -107,6 +107,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:ADMIN,MANAGER', 'department.access'])->prefix('admin')->group(function () {
         Route::get('/month-summary', [Admin\MonthSummaryController::class, 'index'])->name('admin.month-summary.index');
         Route::get('/alerts', [Admin\AlertController::class, 'index'])->name('admin.alerts.index');
+        Route::get('/overtime', [Admin\OvertimeController::class, 'index'])->name('admin.overtime.index');
+        Route::get('/comp-leaves', [Admin\CompLeaveController::class, 'index'])->name('admin.comp-leaves.index');
+        Route::post('/comp-leaves', [Admin\CompLeaveController::class, 'store'])->name('admin.comp-leaves.store');
+        Route::delete('/comp-leaves/{compLeave}', [Admin\CompLeaveController::class, 'destroy'])->name('admin.comp-leaves.destroy');
     });
 });
 

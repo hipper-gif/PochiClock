@@ -79,7 +79,6 @@ class TimeService
 
     /**
      * Apply early clock-in cutoff.
-     * If clock-in is before the cutoff time, round it forward to the cutoff.
      */
     public function applyEarlyCutoff(Carbon $clockIn, ?string $cutoff, ?string $cutoffPm = null, int $sessionNumber = 1): Carbon
     {
@@ -182,6 +181,49 @@ class TimeService
                     );
                 }
                 $total += $minutes ?? 0;
+            }
+        }
+        return $total;
+    }
+
+    /**
+     * Calculate overtime minutes for a single attendance session.
+     */
+    public function calculateOvertimeMinutes(
+        Carbon $clockIn,
+        ?Carbon $clockOut,
+        Collection $breaks,
+        array $rounding,
+        array $rule,
+        int $sessionNumber = 1
+    ): int {
+        if (!$clockOut) return 0;
+
+        $wm = $this->calculateWorkingMinutesWithCutoff($clockIn, $clockOut, $breaks, $rounding, $rule, $sessionNumber);
+        if ($wm === null) return 0;
+
+        [$sh, $sm] = explode(':', $rule['work_start_time']);
+        [$eh, $em] = explode(':', $rule['work_end_time']);
+        $standardMinutes = ((int)$eh * 60 + (int)$em) - ((int)$sh * 60 + (int)$sm) - (int)($rule['default_break_minutes'] ?? 60);
+
+        return max(0, $wm - $standardMinutes);
+    }
+
+    /**
+     * Calculate total overtime for a collection of attendances.
+     */
+    public function calculateTotalOvertimeMinutes(
+        Collection $attendances,
+        array $rounding,
+        array $rule
+    ): int {
+        $total = 0;
+        foreach ($attendances as $att) {
+            if ($att->clock_out) {
+                $total += $this->calculateOvertimeMinutes(
+                    $att->clock_in, $att->clock_out, $att->breakRecords,
+                    $rounding, $rule, $att->session_number ?? 1
+                );
             }
         }
         return $total;
