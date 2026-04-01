@@ -71,6 +71,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/department', [Admin\WorkRuleController::class, 'upsertDepartment'])->name('admin.settings.upsertDepartment');
         Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
         Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
+
+        // アラート
+        Route::get('/alerts', [Admin\AlertController::class, 'index'])->name('admin.alerts.index');
     });
 });
 
