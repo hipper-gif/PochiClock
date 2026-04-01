@@ -77,6 +77,49 @@ class TimeService
         ];
     }
 
+    /**
+     * Calculate overtime minutes for a single attendance session.
+     */
+    public function calculateOvertimeMinutes(
+        Carbon $clockIn,
+        ?Carbon $clockOut,
+        Collection $breaks,
+        array $rounding,
+        array $rule,
+        int $sessionNumber = 1
+    ): int {
+        if (!$clockOut) return 0;
+
+        $wm = $this->calculateWorkingMinutesWithRounding($clockIn, $clockOut, $breaks, $rounding);
+        if ($wm === null) return 0;
+
+        [$sh, $sm] = explode(':', $rule['work_start_time']);
+        [$eh, $em] = explode(':', $rule['work_end_time']);
+        $standardMinutes = ((int)$eh * 60 + (int)$em) - ((int)$sh * 60 + (int)$sm) - (int)($rule['default_break_minutes'] ?? 60);
+
+        return max(0, $wm - $standardMinutes);
+    }
+
+    /**
+     * Calculate total overtime for a collection of attendances (cross-day).
+     */
+    public function calculateTotalOvertimeMinutes(
+        Collection $attendances,
+        array $rounding,
+        array $rule
+    ): int {
+        $total = 0;
+        foreach ($attendances as $att) {
+            if ($att->clock_out) {
+                $total += $this->calculateOvertimeMinutes(
+                    $att->clock_in, $att->clock_out, $att->breakRecords,
+                    $rounding, $rule, $att->session_number ?? 1
+                );
+            }
+        }
+        return $total;
+    }
+
     public function detectAttendanceAlerts(Carbon $clockIn, ?Carbon $clockOut, array $rule): array
     {
         $alerts = [];

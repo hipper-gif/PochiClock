@@ -28,6 +28,8 @@
             <a href="{{ route('admin.users.index') }}" class="text-sm {{ request()->routeIs('admin.users.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">ユーザー</a>
             <a href="{{ route('admin.departments.index') }}" class="text-sm {{ request()->routeIs('admin.departments.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">部署</a>
             <a href="{{ route('admin.attendance.index') }}" class="text-sm {{ request()->routeIs('admin.attendance.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">勤怠管理</a>
+            <a href="{{ route('admin.overtime.index') }}" class="text-sm {{ request()->routeIs('admin.overtime.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">残業管理</a>
+            <a href="{{ route('admin.comp-leaves.index') }}" class="text-sm {{ request()->routeIs('admin.comp-leaves.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">振替管理</a>
             <a href="{{ route('admin.settings.index') }}" class="text-sm {{ request()->routeIs('admin.settings.*') ? 'text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700' }}">勤務ルール</a>
         </div>
         @endif

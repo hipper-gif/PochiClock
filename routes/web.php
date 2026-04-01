@@ -71,6 +71,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/department', [Admin\WorkRuleController::class, 'upsertDepartment'])->name('admin.settings.upsertDepartment');
         Route::post('/settings/user', [Admin\WorkRuleController::class, 'upsertUser'])->name('admin.settings.upsertUser');
         Route::delete('/settings/{rule}', [Admin\WorkRuleController::class, 'destroy'])->name('admin.settings.destroy');
+
+        // 残業管理
+        Route::get('/overtime', [Admin\OvertimeController::class, 'index'])->name('admin.overtime.index');
+
+        // 振替管理
+        Route::get('/comp-leaves', [Admin\CompLeaveController::class, 'index'])->name('admin.comp-leaves.index');
+        Route::post('/comp-leaves', [Admin\CompLeaveController::class, 'store'])->name('admin.comp-leaves.store');
+        Route::delete('/comp-leaves/{compLeave}', [Admin\CompLeaveController::class, 'destroy'])->name('admin.comp-leaves.destroy');
     });
 });
 
