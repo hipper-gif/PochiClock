@@ -65,6 +65,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'updateBreak'])->name('admin.attendance.updateBreak');
         Route::delete('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'deleteBreak'])->name('admin.attendance.deleteBreak');
 
+        // リアルタイム出勤状況
+        Route::get('/realtime', [Admin\RealtimeDashboardController::class, 'index'])->name('admin.realtime.index');
+        Route::get('/realtime/data', [Admin\RealtimeDashboardController::class, 'data'])->name('admin.realtime.data');
+
         // 勤務ルール設定
         Route::get('/settings', [Admin\WorkRuleController::class, 'index'])->name('admin.settings.index');
         Route::post('/settings/system', [Admin\WorkRuleController::class, 'upsertSystem'])->name('admin.settings.upsertSystem');
