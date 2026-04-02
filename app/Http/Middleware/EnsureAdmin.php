@@ -7,6 +7,11 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @deprecated Legacy middleware - replaced by EnsureRole middleware.
+ * Kept because bootstrap/app.php still registers it as 'admin' alias.
+ * Safe to remove once all 'admin' middleware references are migrated to 'role:admin'.
+ */
 class EnsureAdmin
 {
     public function handle(Request $request, Closure $next): Response

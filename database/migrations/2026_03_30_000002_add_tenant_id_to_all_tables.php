@@ -24,7 +24,9 @@ return new class extends Migration
         foreach ($this->tables as $table) {
             Schema::table($table, function (Blueprint $blueprint) use ($table) {
                 $blueprint->uuid('tenant_id')->nullable()->after('id');
-                $blueprint->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+                if ($table !== 'sessions') {
+                    $blueprint->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+                }
                 $blueprint->index('tenant_id');
             });
         }
@@ -33,8 +35,10 @@ return new class extends Migration
     public function down(): void
     {
         foreach (array_reverse($this->tables) as $table) {
-            Schema::table($table, function (Blueprint $blueprint) {
-                $blueprint->dropForeign(['tenant_id']);
+            Schema::table($table, function (Blueprint $blueprint) use ($table) {
+                if ($table !== 'sessions') {
+                    $blueprint->dropForeign(['tenant_id']);
+                }
                 $blueprint->dropIndex(['tenant_id']);
                 $blueprint->dropColumn('tenant_id');
             });

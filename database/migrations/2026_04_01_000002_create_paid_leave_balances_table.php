@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('grant_reason')->nullable();
             $table->timestamps();
 
+            $table->foreign('tenant_id')->references('id')->on('tenants')->nullOnDelete();
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }

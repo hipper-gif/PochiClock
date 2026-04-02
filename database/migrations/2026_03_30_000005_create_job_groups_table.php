@@ -10,8 +10,10 @@ return new class extends Migration
     {
         Schema::create('job_groups', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->uuid('tenant_id')->nullable()->index();
             $table->string('name');
             $table->string('description')->nullable();
+            $table->foreign('tenant_id')->references('id')->on('tenants')->nullOnDelete();
             $table->timestamps();
         });
     }

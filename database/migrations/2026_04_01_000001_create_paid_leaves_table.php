@@ -20,6 +20,7 @@ return new class extends Migration
             $table->timestamp('approved_at')->nullable();
             $table->timestamps();
 
+            $table->foreign('tenant_id')->references('id')->on('tenants')->nullOnDelete();
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }

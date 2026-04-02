@@ -50,7 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/dashboard/profile', [ProfileController::class, 'updateName'])->name('profile.updateName');
     Route::put('/dashboard/profile/password', [ProfileController::class, 'changePassword'])->name('profile.changePassword');
 
-    // 管理者（admin専用）
+    // 管理者専用（admin only）
     Route::middleware('role:ADMIN')->prefix('admin')->group(function () {
         Route::get('/', fn () => redirect()->route('admin.users.index'));
 
@@ -92,41 +92,52 @@ Route::middleware('auth')->group(function () {
         // 監査ログ
         Route::get('/audit-logs', [Admin\AuditLogController::class, 'index'])->name('admin.audit-logs.index');
 
-        // 有給管理（admin only）
+        // 有給管理（付与操作）
         Route::post('/paid-leaves/grant', [Admin\PaidLeaveController::class, 'grant'])->name('admin.paid-leaves.grant');
         Route::post('/paid-leaves/auto-grant', [Admin\PaidLeaveController::class, 'autoGrant'])->name('admin.paid-leaves.autoGrant');
 
-        // シフトテンプレート管理（admin only）
+        // シフトテンプレート管理
         Route::get('/shifts/templates', [Admin\ShiftController::class, 'templates'])->name('admin.shifts.templates');
         Route::post('/shifts/templates', [Admin\ShiftController::class, 'storeTemplate'])->name('admin.shifts.storeTemplate');
         Route::put('/shifts/templates/{template}', [Admin\ShiftController::class, 'updateTemplate'])->name('admin.shifts.updateTemplate');
         Route::delete('/shifts/templates/{template}', [Admin\ShiftController::class, 'destroyTemplate'])->name('admin.shifts.destroyTemplate');
     });
 
-    // 勤怠管理（admin + manager）
+    // 管理者・マネージャー共通
     Route::middleware(['role:ADMIN,MANAGER', 'department.access'])->prefix('admin')->group(function () {
+        // 勤怠管理
         Route::get('/attendance', [Admin\AttendanceController::class, 'index'])->name('admin.attendance.index');
         Route::put('/attendance/{attendance}', [Admin\AttendanceController::class, 'update'])->name('admin.attendance.update');
         Route::get('/attendance/export', [Admin\AttendanceController::class, 'export'])->name('admin.attendance.export');
         Route::post('/attendance/{attendance}/breaks', [Admin\AttendanceController::class, 'addBreak'])->name('admin.attendance.addBreak');
         Route::put('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'updateBreak'])->name('admin.attendance.updateBreak');
         Route::delete('/breaks/{breakRecord}', [Admin\AttendanceController::class, 'deleteBreak'])->name('admin.attendance.deleteBreak');
-    });
 
-    // 管理者・マネージャー共通
-    Route::middleware(['role:ADMIN,MANAGER', 'department.access'])->prefix('admin')->group(function () {
+        // リアルタイム出勤状況
         Route::get('/realtime', [Admin\RealtimeDashboardController::class, 'index'])->name('admin.realtime.index');
         Route::get('/realtime/data', [Admin\RealtimeDashboardController::class, 'data'])->name('admin.realtime.data');
+
+        // 月次サマリ
         Route::get('/month-summary', [Admin\MonthSummaryController::class, 'index'])->name('admin.month-summary.index');
+
+        // アラート
         Route::get('/alerts', [Admin\AlertController::class, 'index'])->name('admin.alerts.index');
+
+        // 残業管理
         Route::get('/overtime', [Admin\OvertimeController::class, 'index'])->name('admin.overtime.index');
+
+        // 振替管理
         Route::get('/comp-leaves', [Admin\CompLeaveController::class, 'index'])->name('admin.comp-leaves.index');
         Route::post('/comp-leaves', [Admin\CompLeaveController::class, 'store'])->name('admin.comp-leaves.store');
         Route::delete('/comp-leaves/{compLeave}', [Admin\CompLeaveController::class, 'destroy'])->name('admin.comp-leaves.destroy');
+
+        // 有給管理（共通部分）
         Route::get('/paid-leaves', [Admin\PaidLeaveController::class, 'index'])->name('admin.paid-leaves.index');
         Route::post('/paid-leaves/apply', [Admin\PaidLeaveController::class, 'apply'])->name('admin.paid-leaves.apply');
         Route::put('/paid-leaves/{paidLeave}/approve', [Admin\PaidLeaveController::class, 'approve'])->name('admin.paid-leaves.approve');
         Route::put('/paid-leaves/{paidLeave}/reject', [Admin\PaidLeaveController::class, 'reject'])->name('admin.paid-leaves.reject');
+
+        // シフト管理（共通部分）
         Route::get('/shifts', [Admin\ShiftController::class, 'index'])->name('admin.shifts.index');
         Route::post('/shifts/assign', [Admin\ShiftController::class, 'assign'])->name('admin.shifts.assign');
         Route::post('/shifts/bulk-assign', [Admin\ShiftController::class, 'bulkAssign'])->name('admin.shifts.bulkAssign');
