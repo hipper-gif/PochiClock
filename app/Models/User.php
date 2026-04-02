@@ -27,12 +27,9 @@ class User extends Authenticatable
         'role',
         'is_active',
         'department_id',
-<<<<<<< HEAD
         'job_group_id',
-=======
         'hire_date',
         'weekly_work_days',
->>>>>>> worktree-agent-a811f450
     ];
 
     protected $hidden = [
