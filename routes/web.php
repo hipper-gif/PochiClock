@@ -29,6 +29,11 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// デバッグ用テストルート（本番では削除）
+Route::middleware('auth')->get('/test-auth', function () {
+    return response('OK: ' . auth()->user()->name, 200, ['Content-Type' => 'text/plain']);
+});
+
 // 認証必須
 Route::middleware('auth')->group(function () {
     // ダッシュボード

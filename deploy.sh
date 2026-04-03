@@ -6,7 +6,7 @@ set -e
 
 SERVER="xserver-smartclock"
 REMOTE_DIR="~/twinklemark.xsrv.jp/pochiclock"
-PHP="/usr/bin/php8.3"
+PHP="/usr/bin/php8.4"
 
 echo "=== PochiClock Deploy ==="
 
