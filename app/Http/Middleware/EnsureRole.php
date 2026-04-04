@@ -17,7 +17,7 @@ class EnsureRole
             abort(403);
         }
 
-        $allowed = array_map(fn($r) => Role::from($r), $roles);
+        $allowed = array_filter(array_map(fn($r) => Role::tryFrom($r), $roles));
 
         if (! in_array($userRole, $allowed)) {
             abort(403);

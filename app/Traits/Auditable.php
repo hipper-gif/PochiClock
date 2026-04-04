@@ -14,7 +14,7 @@ trait Auditable
         });
 
         static::updated(function ($model) {
-            $dirty = $model->getDirty();
+            $dirty = collect($model->getDirty())->except(['updated_at', 'created_at'])->toArray();
             if (empty($dirty)) {
                 return;
             }

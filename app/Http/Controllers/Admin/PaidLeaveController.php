@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\PaidLeaveService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PaidLeaveController extends Controller
 {
@@ -45,7 +46,7 @@ class PaidLeaveController extends Controller
 
         // 申請一覧（pending優先、新しい順）
         $applications = PaidLeave::with(['user', 'approver'])
-            ->orderByRaw("FIELD(status, 'pending', 'approved', 'rejected')")
+            ->orderByRaw("CASE status WHEN 'pending' THEN 1 WHEN 'approved' THEN 2 WHEN 'rejected' THEN 3 END")
             ->orderByDesc('created_at')
             ->limit(50)
             ->get();
@@ -115,14 +116,16 @@ class PaidLeaveController extends Controller
             return back()->with('error', '有給残日数が不足しています（残: ' . $remaining . '日）');
         }
 
-        // 残高から消費
-        $this->paidLeaveService->useDays($user, $consumeDays);
+        // 残高消費とステータス更新をトランザクションで実行
+        DB::transaction(function () use ($user, $consumeDays, $paidLeave) {
+            $this->paidLeaveService->useDays($user, $consumeDays);
 
-        $paidLeave->update([
-            'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
-        ]);
+            $paidLeave->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+        });
 
         return back()->with('success', $user->name . 'さんの有給申請を承認しました');
     }
@@ -136,11 +139,13 @@ class PaidLeaveController extends Controller
             return back()->with('error', 'この申請は既に処理済みです');
         }
 
-        $paidLeave->update([
-            'status' => 'rejected',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
-        ]);
+        DB::transaction(function () use ($paidLeave) {
+            $paidLeave->update([
+                'status' => 'rejected',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+        });
 
         return back()->with('success', $paidLeave->user->name . 'さんの有給申請を却下しました');
     }

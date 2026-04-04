@@ -11,6 +11,13 @@ class AuditLogController extends Controller
 {
     public function index(Request $request)
     {
+        $request->validate([
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date',
+            'type' => 'nullable|string',
+            'user_id' => 'nullable|exists:users,id',
+        ]);
+
         $query = AuditLog::with('user')
             ->orderByDesc('created_at');
 

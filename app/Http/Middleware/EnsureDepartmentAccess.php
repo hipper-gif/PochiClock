@@ -20,19 +20,20 @@ class EnsureDepartmentAccess
 
         // Manager can only access their own department
         if ($user->role === Role::MANAGER) {
-            // If route has a user parameter, check department
             $targetUser = $request->route('user');
             if ($targetUser && $targetUser->department_id !== $user->department_id) {
                 abort(403);
             }
 
-            // If route has a department parameter, check it matches
             $department = $request->route('department');
             if ($department && $department->id !== $user->department_id) {
                 abort(403);
             }
+
+            return $next($request);
         }
 
-        return $next($request);
+        // Employee should not access admin routes at all
+        abort(403);
     }
 }

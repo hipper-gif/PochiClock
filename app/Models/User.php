@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
-    use HasUuids, BelongsToTenant, Auditable;
+    use HasUuids, BelongsToTenant, Auditable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',

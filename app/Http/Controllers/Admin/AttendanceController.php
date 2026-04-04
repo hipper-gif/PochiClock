@@ -12,6 +12,7 @@ use App\Services\TimeService;
 use App\Services\WorkRuleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
@@ -87,12 +88,14 @@ class AttendanceController extends Controller
             $data['session_number'] = $request->session_number;
         }
 
-        $attendance->update($data);
+        DB::transaction(function () use ($attendance, $data, $request) {
+            $attendance->update($data);
 
-        // Set reason on the audit log
-        if ($request->filled('reason')) {
-            $attendance->auditLogs()->latest()->first()?->update(['reason' => $request->reason]);
-        }
+            // Set reason on the audit log
+            if ($request->filled('reason')) {
+                $attendance->auditLogs()->latest()->first()?->update(['reason' => $request->reason]);
+            }
+        });
 
         return back()->with('success', '打刻を修正しました');
     }
