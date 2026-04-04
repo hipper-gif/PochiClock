@@ -28,7 +28,7 @@ ssh $SERVER "cd $REMOTE_DIR && $PHP artisan migrate --force"
 
 # 5. キャッシュクリア＆再構築
 echo "[5/5] Clearing and rebuilding caches..."
-ssh $SERVER "cd $REMOTE_DIR && $PHP artisan config:cache && $PHP artisan route:cache && $PHP artisan view:cache"
+ssh $SERVER "cd $REMOTE_DIR && $PHP artisan config:cache && $PHP artisan route:clear && $PHP artisan view:cache"
 
 echo ""
 echo "=== Deploy complete ==="
