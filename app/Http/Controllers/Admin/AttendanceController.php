@@ -155,17 +155,17 @@ class AttendanceController extends Controller
                 ]);
 
                 foreach ($attendances as $att) {
-                    $rule = app(WorkRuleService::class)->resolve($att->user_id);
+                    $rule = $this->workRuleService->resolve($att->user_id);
                     $rounding = [
                         'rounding_unit' => $rule['rounding_unit'],
                         'clock_in_rounding' => $rule['clock_in_rounding'],
                         'clock_out_rounding' => $rule['clock_out_rounding'],
                     ];
 
-                    $workMin = app(TimeService::class)->calculateWorkingMinutesWithRounding(
+                    $workMin = $this->timeService->calculateWorkingMinutesWithRounding(
                         $att->clock_in, $att->clock_out, $att->breakRecords, $rounding
                     );
-                    $breakMin = app(TimeService::class)->calculateBreakMinutes($att->breakRecords);
+                    $breakMin = $this->timeService->calculateBreakMinutes($att->breakRecords);
 
                     // Standard day minutes from work rule (work_start to work_end minus default break)
                     [$startH, $startM] = explode(':', $rule['work_start_time']);
@@ -177,7 +177,7 @@ class AttendanceController extends Controller
                     $overtimeMin = $workMin !== null ? max(0, $workMin - $standardDayMinutes) : 0;
 
                     // Effective clock_in after rounding
-                    $roundedTimes = app(TimeService::class)->getRoundedTimes($att->clock_in, $att->clock_out, $rounding);
+                    $roundedTimes = $this->timeService->getRoundedTimes($att->clock_in, $att->clock_out, $rounding);
                     $effectiveClockIn = $roundedTimes['rounded_clock_in'];
 
                     fputcsv($file, [
@@ -206,14 +206,14 @@ class AttendanceController extends Controller
                 fputcsv($file, ['社員番号', '名前', '部署', '日付', '回', '出勤', '退勤', '休憩(分)', '実働(分)', '備考']);
 
                 foreach ($attendances as $att) {
-                    $rule = app(WorkRuleService::class)->resolve($att->user_id);
+                    $rule = $this->workRuleService->resolve($att->user_id);
                     $rounding = [
                         'rounding_unit' => $rule['rounding_unit'],
                         'clock_in_rounding' => $rule['clock_in_rounding'],
                         'clock_out_rounding' => $rule['clock_out_rounding'],
                     ];
-                    $breakMin = app(TimeService::class)->calculateBreakMinutes($att->breakRecords);
-                    $workMin = app(TimeService::class)->calculateWorkingMinutesWithCutoff(
+                    $breakMin = $this->timeService->calculateBreakMinutes($att->breakRecords);
+                    $workMin = $this->timeService->calculateWorkingMinutesWithCutoff(
                         $att->clock_in, $att->clock_out, $att->breakRecords, $rounding, $rule
                     );
 

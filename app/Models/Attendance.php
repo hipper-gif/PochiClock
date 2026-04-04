@@ -33,6 +33,11 @@ class Attendance extends Model
         return [
             'clock_in' => 'datetime',
             'clock_out' => 'datetime',
+            'session_number' => 'integer',
+            'clock_in_lat' => 'float',
+            'clock_in_lng' => 'float',
+            'clock_out_lat' => 'float',
+            'clock_out_lng' => 'float',
         ];
     }
 

@@ -134,7 +134,7 @@ class DashboardController extends Controller
                     $rounded = $this->timeService->getRoundedTimesWithCutoff(
                         $record->clock_in, $record->clock_out, $rounding, $rule, $record->session_number ?? 1
                     );
-                    $bindingMin = $rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']);
+                    $bindingMin = abs($rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']));
                     $breakMin = $this->timeService->calculateBreakMinutes($record->breakRecords);
                     $totalBindingMinutes += $bindingMin;
                     $totalBreakMinutes += $breakMin;

@@ -61,7 +61,7 @@
                         @php
                             $rounded = app(\App\Services\TimeService::class)->getRoundedTimesWithCutoff($record->clock_in, $record->clock_out, $rounding, $rule, $record->session_number ?? 1);
                             $breakMin = app(\App\Services\TimeService::class)->calculateBreakMinutes($record->breakRecords);
-                            $bindMin = $rounded['rounded_clock_out'] ? $rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']) : null;
+                            $bindMin = $rounded['rounded_clock_out'] ? abs($rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out'])) : null;
                             $workMin = $bindMin !== null ? max(0, $bindMin - $breakMin) : null;
                             if ($bindMin !== null) {
                                 $dayTotalBindMin += $bindMin;

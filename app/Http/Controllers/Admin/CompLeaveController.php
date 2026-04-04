@@ -14,6 +14,11 @@ use Illuminate\Http\Request;
 
 class CompLeaveController extends Controller
 {
+    public function __construct(
+        private TimeService $timeService,
+        private WorkRuleService $workRuleService,
+    ) {}
+
     public function index(Request $request)
     {
         $year         = (int) $request->input('year', now()->year);
@@ -29,9 +34,6 @@ class CompLeaveController extends Controller
         $yearStart = Carbon::create($year, 1, 1)->startOfDay();
         $yearEnd   = Carbon::create($year, 12, 31)->endOfDay();
 
-        $timeService     = app(TimeService::class);
-        $workRuleService = app(WorkRuleService::class);
-
         $yearlyAtts = Attendance::whereBetween('clock_in', [$yearStart, $yearEnd])
             ->whereIn('user_id', $users->pluck('id'))
             ->with('breakRecords')
@@ -46,7 +48,7 @@ class CompLeaveController extends Controller
 
         $data = [];
         foreach ($users as $user) {
-            $rule = $workRuleService->resolve($user->id);
+            $rule = $this->workRuleService->resolve($user->id);
             $rounding = [
                 'rounding_unit'      => $rule['rounding_unit'],
                 'clock_in_rounding'  => $rule['clock_in_rounding'],
@@ -54,7 +56,7 @@ class CompLeaveController extends Controller
             ];
 
             $userAtts    = $yearlyAtts->get($user->id, collect());
-            $otMinutes   = $timeService->calculateTotalOvertimeMinutes($userAtts, $rounding, $rule);
+            $otMinutes   = $this->timeService->calculateTotalOvertimeMinutes($userAtts, $rounding, $rule);
             $otHours     = $otMinutes / 60;
 
             $userLeaves  = $compLeaves->get($user->id, collect());

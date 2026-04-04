@@ -13,6 +13,11 @@ use Illuminate\Http\Request;
 
 class MonthSummaryController extends Controller
 {
+    public function __construct(
+        private TimeService $timeService,
+        private WorkRuleService $workRuleService,
+    ) {}
+
     public function index(Request $request)
     {
         $year = (int) $request->input('year', now()->year);
@@ -37,9 +42,6 @@ class MonthSummaryController extends Controller
         $startOfMonth = Carbon::create($year, $month, 1)->startOfDay();
         $endOfMonth = $startOfMonth->copy()->endOfMonth()->endOfDay();
 
-        $timeService = app(TimeService::class);
-        $workRuleService = app(WorkRuleService::class);
-
         // Fetch all attendances for the period at once
         $allAttendances = Attendance::whereBetween('clock_in', [$startOfMonth, $endOfMonth])
             ->whereIn('user_id', $users->pluck('id'))
@@ -50,7 +52,7 @@ class MonthSummaryController extends Controller
         $summaries = [];
         foreach ($users as $user) {
             $userAttendances = $allAttendances->get($user->id, collect());
-            $rule = $workRuleService->resolve($user->id);
+            $rule = $this->workRuleService->resolve($user->id);
             $rounding = [
                 'rounding_unit' => $rule['rounding_unit'],
                 'clock_in_rounding' => $rule['clock_in_rounding'],
@@ -74,15 +76,15 @@ class MonthSummaryController extends Controller
 
             foreach ($userAttendances as $att) {
                 if ($att->clock_out) {
-                    $wm = $timeService->calculateWorkingMinutesWithRounding(
+                    $wm = $this->timeService->calculateWorkingMinutesWithRounding(
                         $att->clock_in, $att->clock_out, $att->breakRecords, $rounding
                     );
                     if ($wm !== null) {
                         $totalWorkingMinutes += $wm;
                         $overtimeMinutes += max(0, $wm - $standardDayMinutes);
                     }
-                    $totalBreakMinutes += $timeService->calculateBreakMinutes($att->breakRecords);
-                    $alerts = $timeService->detectAttendanceAlerts($att->clock_in, $att->clock_out, $rule);
+                    $totalBreakMinutes += $this->timeService->calculateBreakMinutes($att->breakRecords);
+                    $alerts = $this->timeService->detectAttendanceAlerts($att->clock_in, $att->clock_out, $rule);
                     foreach ($alerts as $alert) {
                         if ($alert['type'] === 'late') $lateCount++;
                         if ($alert['type'] === 'early_leave') $earlyLeaveCount++;

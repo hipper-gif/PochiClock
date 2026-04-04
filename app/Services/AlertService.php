@@ -39,29 +39,21 @@ class AlertService
             ->with('user', 'user.department')
             ->get();
 
-        return $attendances->filter(function ($att) {
-            $rule = $this->workRuleService->resolve($att->user_id);
-            $alerts = $this->timeService->detectAttendanceAlerts(
-                $att->clock_in, $att->clock_out, $rule
-            );
-            foreach ($alerts as $alert) {
-                if ($alert['type'] === 'overtime' && $alert['minutes'] >= 15) {
-                    return true;
-                }
-            }
-            return false;
-        })->map(function ($att) {
+        return $attendances->map(function ($att) {
             $rule = $this->workRuleService->resolve($att->user_id);
             $alerts = $this->timeService->detectAttendanceAlerts(
                 $att->clock_in, $att->clock_out, $rule
             );
             $overtimeAlert = collect($alerts)->firstWhere('type', 'overtime');
-            return [
-                'attendance' => $att,
-                'overtime_minutes' => $overtimeAlert['minutes'] ?? 0,
-                'work_end_time' => $rule['work_end_time'],
-            ];
-        })->values();
+            if ($overtimeAlert && $overtimeAlert['minutes'] >= 15) {
+                return [
+                    'attendance' => $att,
+                    'overtime_minutes' => $overtimeAlert['minutes'],
+                    'work_end_time' => $rule['work_end_time'],
+                ];
+            }
+            return null;
+        })->filter()->values();
     }
 
     /**

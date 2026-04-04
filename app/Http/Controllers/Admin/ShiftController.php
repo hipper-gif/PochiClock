@@ -9,6 +9,7 @@ use App\Models\ShiftTemplate;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ShiftController extends Controller
 {
@@ -153,17 +154,20 @@ class ShiftController extends Controller
             'assignments.*.note' => 'nullable|string|max:255',
         ]);
 
-        $count = 0;
-        foreach ($validated['assignments'] as $assignment) {
-            ShiftAssignment::updateOrCreate(
-                ['user_id' => $assignment['user_id'], 'date' => $assignment['date']],
-                [
-                    'shift_template_id' => $assignment['shift_template_id'],
-                    'note' => $assignment['note'] ?? null,
-                ]
-            );
-            $count++;
-        }
+        $count = DB::transaction(function () use ($validated) {
+            $count = 0;
+            foreach ($validated['assignments'] as $assignment) {
+                ShiftAssignment::updateOrCreate(
+                    ['user_id' => $assignment['user_id'], 'date' => $assignment['date']],
+                    [
+                        'shift_template_id' => $assignment['shift_template_id'],
+                        'note' => $assignment['note'] ?? null,
+                    ]
+                );
+                $count++;
+            }
+            return $count;
+        });
 
         return redirect()->back()->with('success', "{$count}件のシフトを割り当てました");
     }

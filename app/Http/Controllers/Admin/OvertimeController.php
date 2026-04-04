@@ -13,6 +13,11 @@ use Illuminate\Http\Request;
 
 class OvertimeController extends Controller
 {
+    public function __construct(
+        private TimeService $timeService,
+        private WorkRuleService $workRuleService,
+    ) {}
+
     public function index(Request $request)
     {
         $year  = (int) $request->input('year', now()->year);
@@ -30,15 +35,7 @@ class OvertimeController extends Controller
         $endOfMonth   = $startOfMonth->copy()->endOfMonth()->endOfDay();
         $yearStart    = Carbon::create($year, 1, 1)->startOfDay();
 
-        $timeService     = app(TimeService::class);
-        $workRuleService = app(WorkRuleService::class);
-
-        $monthlyAtts = Attendance::whereBetween('clock_in', [$startOfMonth, $endOfMonth])
-            ->whereIn('user_id', $users->pluck('id'))
-            ->with('breakRecords')
-            ->get()
-            ->groupBy('user_id');
-
+        // Single query: fetch year-to-date, then filter monthly in PHP
         $yearlyAtts = Attendance::whereBetween('clock_in', [$yearStart, $endOfMonth])
             ->whereIn('user_id', $users->pluck('id'))
             ->with('breakRecords')
@@ -47,17 +44,17 @@ class OvertimeController extends Controller
 
         $overtimeData = [];
         foreach ($users as $user) {
-            $rule = $workRuleService->resolve($user->id);
+            $rule = $this->workRuleService->resolve($user->id);
             $rounding = [
                 'rounding_unit'      => $rule['rounding_unit'],
                 'clock_in_rounding'  => $rule['clock_in_rounding'],
                 'clock_out_rounding' => $rule['clock_out_rounding'],
             ];
 
-            $monthAtts   = $monthlyAtts->get($user->id, collect());
             $yearAtts    = $yearlyAtts->get($user->id, collect());
-            $monthlyOt   = $timeService->calculateTotalOvertimeMinutes($monthAtts, $rounding, $rule);
-            $yearlyOt    = $timeService->calculateTotalOvertimeMinutes($yearAtts, $rounding, $rule);
+            $monthAtts   = $yearAtts->filter(fn ($att) => $att->clock_in >= $startOfMonth);
+            $monthlyOt   = $this->timeService->calculateTotalOvertimeMinutes($monthAtts, $rounding, $rule);
+            $yearlyOt    = $this->timeService->calculateTotalOvertimeMinutes($yearAtts, $rounding, $rule);
 
             $overtimeData[] = [
                 'user'                 => $user,
