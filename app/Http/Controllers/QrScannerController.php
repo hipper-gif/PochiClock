@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\WorkRuleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class QrScannerController extends Controller
 {
@@ -20,6 +21,12 @@ class QrScannerController extends Controller
 
     public function verify(Request $request)
     {
+        $key = 'qr_verify:' . $request->ip();
+        if (RateLimiter::tooManyAttempts($key, 30)) {
+            return response()->json(['error' => '試行回数の上限を超えました'], 429);
+        }
+        RateLimiter::hit($key, 60);
+
         $request->validate(['qr_token' => 'required|string']);
 
         $user = User::where('qr_token', $request->qr_token)

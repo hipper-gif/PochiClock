@@ -17,16 +17,15 @@ class SetupController extends Controller
     {
         // Only accessible when no setup has been done
         if (User::count() > 0) {
-            return redirect('/login');
+            return redirect()->route('login');
         }
         return view('setup.index');
     }
 
     public function store(Request $request)
     {
-        // Guard: only accessible if no users exist
         if (User::count() > 0) {
-            return redirect('/login');
+            return redirect()->route('login');
         }
 
         $validated = $request->validate([
@@ -43,6 +42,11 @@ class SetupController extends Controller
         ]);
 
         DB::transaction(function () use ($validated) {
+            // Re-check inside transaction to prevent race condition
+            if (DB::table('users')->lockForUpdate()->count() > 0) {
+                return;
+            }
+
             // 1. Create departments
             $firstDeptId = null;
             foreach ($validated['departments'] as $deptData) {
@@ -81,6 +85,8 @@ class SetupController extends Controller
             Auth::login($admin);
         });
 
-        return redirect('/dashboard')->with('success', 'PochiClockのセットアップが完了しました！');
+        $request->session()->regenerate();
+
+        return redirect()->route('dashboard')->with('success', 'PochiClockのセットアップが完了しました！');
     }
 }

@@ -42,6 +42,10 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        if ($department->users()->exists()) {
+            return back()->with('error', '所属ユーザーがいる部署は削除できません');
+        }
+
         $department->delete();
         return back()->with('success', '部署を削除しました');
     }

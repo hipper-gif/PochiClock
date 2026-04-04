@@ -8,6 +8,8 @@ use App\Models\WorkRule;
 
 class WorkRuleService
 {
+    private array $resolveCache = [];
+
     private const DEFAULT_RULE = [
         'work_start_time' => '09:00',
         'work_end_time' => '18:00',
@@ -24,14 +26,23 @@ class WorkRuleService
 
     public function resolve(string $userId): array
     {
+        if (isset($this->resolveCache[$userId])) {
+            return $this->resolveCache[$userId];
+        }
+
         $user = User::find($userId);
         if (!$user) {
             return self::DEFAULT_RULE;
         }
 
+        return $this->resolveCache[$userId] = $this->doResolve($user);
+    }
+
+    private function doResolve(User $user): array
+    {
         // USER レベル
         $rule = WorkRule::where('scope', WorkRuleScope::USER)
-            ->where('user_id', $userId)
+            ->where('user_id', $user->id)
             ->first();
         if ($rule) {
             return $this->formatRule($rule, 'USER');

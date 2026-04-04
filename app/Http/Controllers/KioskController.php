@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\WorkRuleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class KioskController extends Controller
 {
@@ -21,15 +22,22 @@ class KioskController extends Controller
 
     public function department(Department $department)
     {
-        // Kiosk routes are unauthenticated; set tenant context from the department
         $this->setTenantFromDepartment($department);
-
         return view('kiosk.department', compact('department'));
     }
 
     public function lookup(Request $request, Department $department)
     {
         $this->setTenantFromDepartment($department);
+
+        $key = 'kiosk_pin:' . $request->ip() . ':' . $department->id;
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return response()->json([
+                'success' => false,
+                'message' => '試行回数が上限を超えました。しばらく待ってからお試しください',
+            ], 429);
+        }
+
         $request->validate([
             'kiosk_code' => 'required|digits:4',
         ]);
@@ -40,8 +48,11 @@ class KioskController extends Controller
             ->first();
 
         if (!$user) {
+            RateLimiter::hit($key, 300);
             return response()->json(['success' => false, 'message' => '該当するユーザーが見つかりません']);
         }
+
+        RateLimiter::clear($key);
 
         $today = Carbon::today();
         $rule = $this->workRuleService->resolve($user->id);
@@ -83,9 +94,15 @@ class KioskController extends Controller
     public function clockIn(Request $request, Department $department)
     {
         $this->setTenantFromDepartment($department);
-        $request->validate(['user_id' => 'required|exists:users,id']);
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
 
-        $user = User::findOrFail($request->user_id);
+        $user = User::where('id', $request->user_id)
+            ->where('department_id', $department->id)
+            ->where('is_active', true)
+            ->firstOrFail();
+
         $today = Carbon::today();
         $rule = $this->workRuleService->resolve($user->id);
 
@@ -127,9 +144,15 @@ class KioskController extends Controller
     public function clockOut(Request $request, Department $department)
     {
         $this->setTenantFromDepartment($department);
-        $request->validate(['user_id' => 'required|exists:users,id']);
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
 
-        $user = User::findOrFail($request->user_id);
+        $user = User::where('id', $request->user_id)
+            ->where('department_id', $department->id)
+            ->where('is_active', true)
+            ->firstOrFail();
+
         $today = Carbon::today();
 
         $attendance = Attendance::where('user_id', $user->id)
@@ -143,7 +166,6 @@ class KioskController extends Controller
             return response()->json(['success' => false, 'message' => '出勤記録がありません']);
         }
 
-        // アクティブな休憩を自動終了
         $activeBreak = $attendance->breakRecords->whereNull('break_end')->first();
         if ($activeBreak) {
             $activeBreak->update(['break_end' => Carbon::now()]);
@@ -154,9 +176,6 @@ class KioskController extends Controller
         return response()->json(['success' => true, 'message' => '退勤しました']);
     }
 
-    /**
-     * Set the tenant context from a department (for unauthenticated kiosk routes).
-     */
     private function setTenantFromDepartment(Department $department): void
     {
         if ($department->tenant_id) {

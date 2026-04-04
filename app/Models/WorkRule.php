@@ -16,7 +16,6 @@ class WorkRule extends Model
     protected $fillable = [
         'tenant_id',
         'scope',
-        'department_id',
         'job_group_id',
         'user_id',
         'work_start_time',
@@ -38,11 +37,6 @@ class WorkRule extends Model
             'break_tiers' => 'array',
             'allow_multiple_clock_ins' => 'boolean',
         ];
-    }
-
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
     }
 
     public function jobGroup(): BelongsTo

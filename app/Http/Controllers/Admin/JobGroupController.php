@@ -57,6 +57,10 @@ class JobGroupController extends Controller
             return back()->with('error', '勤務ルールが設定されている職種グループは削除できません。先にルールを削除してください。');
         }
 
+        if ($jobGroup->users()->exists() || $jobGroup->departments()->exists()) {
+            return back()->with('error', '所属ユーザーまたは関連部署がある職種グループは削除できません');
+        }
+
         $jobGroup->delete();
         return back()->with('success', '職種グループを削除しました');
     }
