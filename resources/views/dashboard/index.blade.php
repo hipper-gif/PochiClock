@@ -46,18 +46,20 @@
 
         @foreach($todayAttendances as $session)
             @php
-                $sessionRounded = app(\App\Services\TimeService::class)->getRoundedTimes(
+                $sessionRounded = app(\App\Services\TimeService::class)->getRoundedTimesWithCutoff(
                     $session->clock_in,
                     $session->clock_out,
                     [
                         'rounding_unit' => $rule['rounding_unit'],
                         'clock_in_rounding' => $rule['clock_in_rounding'],
                         'clock_out_rounding' => $rule['clock_out_rounding'],
-                    ]
+                    ],
+                    $rule,
+                    $session->session_number ?? 1
                 );
                 $sessionBreakMin = app(\App\Services\TimeService::class)->calculateBreakMinutes($session->breakRecords);
                 $sessionBindMin = ($session->clock_out && $sessionRounded['rounded_clock_out'])
-                    ? $sessionRounded['rounded_clock_in']->diffInMinutes($sessionRounded['rounded_clock_out'])
+                    ? abs($sessionRounded['rounded_clock_in']->diffInMinutes($sessionRounded['rounded_clock_out']))
                     : null;
                 $sessionWorkMin = $sessionBindMin !== null ? max(0, $sessionBindMin - $sessionBreakMin) : null;
                 $isActive = is_null($session->clock_out);

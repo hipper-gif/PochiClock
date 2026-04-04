@@ -229,11 +229,12 @@ class TimeService
         return $total;
     }
 
-    public function detectAttendanceAlerts(Carbon $clockIn, ?Carbon $clockOut, array $rule): array
+    public function detectAttendanceAlerts(Carbon $clockIn, ?Carbon $clockOut, array $rule, int $sessionNumber = 1): array
     {
         $alerts = [];
 
-        $cinMinutes = $clockIn->hour * 60 + $clockIn->minute;
+        $effectiveClockIn = $this->getEffectiveClockIn($clockIn, $rule, $sessionNumber);
+        $cinMinutes = $effectiveClockIn->hour * 60 + $effectiveClockIn->minute;
         [$startH, $startM] = explode(':', $rule['work_start_time']);
         $startMinutes = (int) $startH * 60 + (int) $startM;
 

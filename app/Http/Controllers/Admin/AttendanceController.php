@@ -165,8 +165,8 @@ class AttendanceController extends Controller
                         'clock_out_rounding' => $rule['clock_out_rounding'],
                     ];
 
-                    $workMin = $this->timeService->calculateWorkingMinutesWithRounding(
-                        $att->clock_in, $att->clock_out, $att->breakRecords, $rounding
+                    $workMin = $this->timeService->calculateWorkingMinutesWithCutoff(
+                        $att->clock_in, $att->clock_out, $att->breakRecords, $rounding, $rule, $att->session_number ?? 1
                     );
                     $breakMin = $this->timeService->calculateBreakMinutes($att->breakRecords);
 
@@ -179,8 +179,8 @@ class AttendanceController extends Controller
                     $normalMin = $workMin !== null ? min($workMin, $standardDayMinutes) : 0;
                     $overtimeMin = $workMin !== null ? max(0, $workMin - $standardDayMinutes) : 0;
 
-                    // Effective clock_in after rounding
-                    $roundedTimes = $this->timeService->getRoundedTimes($att->clock_in, $att->clock_out, $rounding);
+                    // Effective clock_in after cutoff + rounding
+                    $roundedTimes = $this->timeService->getRoundedTimesWithCutoff($att->clock_in, $att->clock_out, $rounding, $rule, $att->session_number ?? 1);
                     $effectiveClockIn = $roundedTimes['rounded_clock_in'];
 
                     fputcsv($file, [
@@ -217,8 +217,9 @@ class AttendanceController extends Controller
                     ];
                     $breakMin = $this->timeService->calculateBreakMinutes($att->breakRecords);
                     $workMin = $this->timeService->calculateWorkingMinutesWithCutoff(
-                        $att->clock_in, $att->clock_out, $att->breakRecords, $rounding, $rule
+                        $att->clock_in, $att->clock_out, $att->breakRecords, $rounding, $rule, $att->session_number ?? 1
                     );
+                    $roundedTimes = $this->timeService->getRoundedTimesWithCutoff($att->clock_in, $att->clock_out, $rounding, $rule, $att->session_number ?? 1);
 
                     fputcsv($file, [
                         $att->user->employee_number,
@@ -226,8 +227,8 @@ class AttendanceController extends Controller
                         $att->user->department?->name ?? '',
                         $att->clock_in->format('Y-m-d'),
                         $att->session_number,
-                        $att->clock_in->format('H:i'),
-                        $att->clock_out?->format('H:i') ?? '',
+                        $roundedTimes['rounded_clock_in']->format('H:i'),
+                        $roundedTimes['rounded_clock_out']?->format('H:i') ?? '',
                         $breakMin,
                         $workMin ?? '',
                         $att->note ?? '',

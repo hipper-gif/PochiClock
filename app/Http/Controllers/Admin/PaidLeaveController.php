@@ -193,10 +193,11 @@ class PaidLeaveController extends Controller
                 continue;
             }
 
-            // 同じ付与日で既に付与済みかチェック
+            // 同じ付与日数で直近1年以内に既に法定付与済みかチェック
             $alreadyGranted = PaidLeaveBalance::where('user_id', $user->id)
-                ->where('grant_date', $grantDate->toDateString())
                 ->where('grant_reason', '法定付与')
+                ->where('granted_days', $days)
+                ->where('grant_date', '>=', $grantDate->copy()->subYear()->toDateString())
                 ->exists();
 
             if ($alreadyGranted) {

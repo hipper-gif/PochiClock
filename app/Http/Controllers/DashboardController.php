@@ -72,7 +72,8 @@ class DashboardController extends Controller
             $alerts = $this->timeService->detectAttendanceAlerts(
                 $attendance->clock_in,
                 $attendance->clock_out,
-                $rule
+                $rule,
+                $attendance->session_number ?? 1
             );
         }
 

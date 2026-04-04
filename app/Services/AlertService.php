@@ -18,9 +18,16 @@ class AlertService
      */
     public function getMissingClockOuts(?string $date = null): Collection
     {
-        $targetDate = $date ? Carbon::parse($date) : Carbon::yesterday();
+        if ($date) {
+            return Attendance::whereDate('clock_in', Carbon::parse($date))
+                ->whereNull('clock_out')
+                ->with('user', 'user.department')
+                ->get();
+        }
 
-        return Attendance::whereDate('clock_in', $targetDate)
+        // Default: past 3 days (covers weekends)
+        return Attendance::where('clock_in', '>=', Carbon::today()->subDays(3))
+            ->where('clock_in', '<', Carbon::today())
             ->whereNull('clock_out')
             ->with('user', 'user.department')
             ->get();
