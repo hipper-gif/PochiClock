@@ -92,6 +92,16 @@ class User extends Authenticatable
         return $this->hasMany(PaidLeaveBalance::class);
     }
 
+    public function compLeaves(): HasMany
+    {
+        return $this->hasMany(CompLeave::class);
+    }
+
+    public function shiftAssignments(): HasMany
+    {
+        return $this->hasMany(ShiftAssignment::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\LeaveStatus;
+use App\Enums\LeaveType;
 use App\Traits\Auditable;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -27,6 +29,8 @@ class PaidLeave extends Model
     {
         return [
             'leave_date' => 'date',
+            'leave_type' => LeaveType::class,
+            'status' => LeaveStatus::class,
             'approved_at' => 'datetime',
         ];
     }
@@ -41,37 +45,8 @@ class PaidLeave extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    /**
-     * 種別の日本語ラベル
-     */
-    public function getLeaveTypeLabelAttribute(): string
-    {
-        return match ($this->leave_type) {
-            'full' => '全休',
-            'half_am' => '半休（午前）',
-            'half_pm' => '半休（午後）',
-            default => $this->leave_type,
-        };
-    }
-
-    /**
-     * ステータスの日本語ラベル
-     */
-    public function getStatusLabelAttribute(): string
-    {
-        return match ($this->status) {
-            'pending' => '申請中',
-            'approved' => '承認済',
-            'rejected' => '却下',
-            default => $this->status,
-        };
-    }
-
-    /**
-     * 消費日数（全休=1.0, 半休=0.5）
-     */
     public function getConsumeDaysAttribute(): float
     {
-        return $this->leave_type === 'full' ? 1.0 : 0.5;
+        return $this->leave_type === LeaveType::FULL ? 1.0 : 0.5;
     }
 }

@@ -20,6 +20,13 @@ class ShiftTemplate extends Model
         'break_minutes',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'break_minutes' => 'integer',
+        ];
+    }
+
     public function assignments(): HasMany
     {
         return $this->hasMany(ShiftAssignment::class);

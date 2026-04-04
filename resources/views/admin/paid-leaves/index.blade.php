@@ -76,19 +76,19 @@
             <tr>
                 <td class="px-3 py-2 font-semibold">{{ $app->user->name }}</td>
                 <td class="px-3 py-2 font-mono">{{ $app->leave_date->format('Y/m/d') }}</td>
-                <td class="px-3 py-2">{{ $app->leave_type_label }}</td>
+                <td class="px-3 py-2">{{ $app->leave_type->label() }}</td>
                 <td class="px-3 py-2 text-gray-500">{{ $app->reason ?? '-' }}</td>
                 <td class="px-3 py-2">
-                    @if($app->status === 'pending')
-                        <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">申請中</span>
-                    @elseif($app->status === 'approved')
-                        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">承認済</span>
+                    @if($app->status === App\Enums\LeaveStatus::PENDING)
+                        <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">{{ $app->status->label() }}</span>
+                    @elseif($app->status === App\Enums\LeaveStatus::APPROVED)
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">{{ $app->status->label() }}</span>
                     @else
-                        <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">却下</span>
+                        <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">{{ $app->status->label() }}</span>
                     @endif
                 </td>
                 <td class="px-3 py-2">
-                    @if($app->status === 'pending')
+                    @if($app->status === App\Enums\LeaveStatus::PENDING)
                         <form method="POST" action="{{ route('admin.paid-leaves.approve', $app) }}" class="inline">
                             @csrf @method('PUT')
                             <button type="submit" class="text-green-600 text-xs hover:underline mr-2">承認</button>

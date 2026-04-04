@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\LeaveStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\PaidLeave;
@@ -103,7 +104,7 @@ class PaidLeaveController extends Controller
      */
     public function approve(PaidLeave $paidLeave)
     {
-        if ($paidLeave->status !== 'pending') {
+        if ($paidLeave->status !== LeaveStatus::PENDING) {
             return back()->with('error', 'この申請は既に処理済みです');
         }
 
@@ -121,7 +122,7 @@ class PaidLeaveController extends Controller
             $this->paidLeaveService->useDays($user, $consumeDays);
 
             $paidLeave->update([
-                'status' => 'approved',
+                'status' => LeaveStatus::APPROVED,
                 'approved_by' => auth()->id(),
                 'approved_at' => now(),
             ]);
@@ -135,13 +136,13 @@ class PaidLeaveController extends Controller
      */
     public function reject(PaidLeave $paidLeave)
     {
-        if ($paidLeave->status !== 'pending') {
+        if ($paidLeave->status !== LeaveStatus::PENDING) {
             return back()->with('error', 'この申請は既に処理済みです');
         }
 
         DB::transaction(function () use ($paidLeave) {
             $paidLeave->update([
-                'status' => 'rejected',
+                'status' => LeaveStatus::REJECTED,
                 'approved_by' => auth()->id(),
                 'approved_at' => now(),
             ]);
