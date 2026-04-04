@@ -17,13 +17,19 @@ return new class extends Migration
             });
         }
 
-        Schema::table('job_groups', function (Blueprint $table) {
-            $table->unique(['tenant_id', 'name'], 'job_groups_tenant_id_name_unique');
-        });
+        $jgIndexes = collect(DB::select('SHOW INDEX FROM job_groups'))->pluck('Key_name');
+        if (!$jgIndexes->contains('job_groups_tenant_id_name_unique')) {
+            Schema::table('job_groups', function (Blueprint $table) {
+                $table->unique(['tenant_id', 'name'], 'job_groups_tenant_id_name_unique');
+            });
+        }
 
-        Schema::table('shift_templates', function (Blueprint $table) {
-            $table->unique(['tenant_id', 'name'], 'shift_templates_tenant_id_name_unique');
-        });
+        $stIndexes = collect(DB::select('SHOW INDEX FROM shift_templates'))->pluck('Key_name');
+        if (!$stIndexes->contains('shift_templates_tenant_id_name_unique')) {
+            Schema::table('shift_templates', function (Blueprint $table) {
+                $table->unique(['tenant_id', 'name'], 'shift_templates_tenant_id_name_unique');
+            });
+        }
 
         // B. tenant_id FK を restrictOnDelete に統一
         $tablesToFix = [
@@ -53,6 +59,7 @@ return new class extends Migration
         // C. sessions テーブルから不要な tenant_id を削除
         if (Schema::hasColumn('sessions', 'tenant_id')) {
             Schema::table('sessions', function (Blueprint $table) {
+                $table->dropForeign(['tenant_id']);
                 $table->dropIndex('sessions_tenant_id_index');
                 $table->dropColumn('tenant_id');
             });
