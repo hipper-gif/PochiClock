@@ -56,7 +56,9 @@
 </div>
 
 <script>
-const deptId = '{{ $department->id }}';
+const lookupUrl = '{{ route("kiosk.lookup", $department) }}';
+const clockInUrl = '{{ route("kiosk.clockIn", $department) }}';
+const clockOutUrl = '{{ route("kiosk.clockOut", $department) }}';
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 let code = '';
 let currentUserId = null;
@@ -86,7 +88,7 @@ function clearCode() {
 }
 
 async function lookup() {
-    const res = await fetch(`/kiosk/${deptId}/lookup`, {
+    const res = await fetch(lookupUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
         body: JSON.stringify({ kiosk_code: code })
@@ -154,7 +156,7 @@ async function lookup() {
 }
 
 async function doClockIn() {
-    const res = await fetch(`/kiosk/${deptId}/clock-in`, {
+    const res = await fetch(clockInUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
         body: JSON.stringify({ user_id: currentUserId })
@@ -164,7 +166,7 @@ async function doClockIn() {
 }
 
 async function doClockOut() {
-    const res = await fetch(`/kiosk/${deptId}/clock-out`, {
+    const res = await fetch(clockOutUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
         body: JSON.stringify({ user_id: currentUserId })

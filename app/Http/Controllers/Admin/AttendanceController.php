@@ -94,10 +94,6 @@ class AttendanceController extends Controller
             $attendance->auditLogs()->latest()->first()?->update(['reason' => $request->reason]);
         }
 
-        if ($request->filled('reason')) {
-            $attendance->auditLogs()->latest()->first()?->update(['reason' => $request->reason]);
-        }
-
         return back()->with('success', '打刻を修正しました');
     }
 

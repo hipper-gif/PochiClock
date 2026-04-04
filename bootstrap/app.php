@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\EnsureDepartmentAccess;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\SetTenant;
@@ -18,7 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', SetTenant::class);
 
         $middleware->alias([
-            'admin' => EnsureAdmin::class,
             'role' => EnsureRole::class,
             'department.access' => EnsureDepartmentAccess::class,
         ]);

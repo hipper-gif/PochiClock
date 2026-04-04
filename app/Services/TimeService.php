@@ -30,7 +30,7 @@ class TimeService
         $total = 0;
         foreach ($breaks as $br) {
             if ($br->break_end) {
-                $total += $br->break_start->diffInMinutes($br->break_end);
+                $total += abs($br->break_start->diffInMinutes($br->break_end));
             }
         }
         return $total;
@@ -42,7 +42,7 @@ class TimeService
             return null;
         }
 
-        $totalMinutes = $clockIn->diffInMinutes($clockOut);
+        $totalMinutes = abs($clockIn->diffInMinutes($clockOut));
         $breakMinutes = $this->calculateBreakMinutes($breaks);
 
         return max(0, $totalMinutes - $breakMinutes);
@@ -61,7 +61,7 @@ class TimeService
         $roundedIn = $this->roundTime($clockIn, $rounding['rounding_unit'], $rounding['clock_in_rounding']);
         $roundedOut = $this->roundTime($clockOut, $rounding['rounding_unit'], $rounding['clock_out_rounding']);
 
-        $totalMinutes = $roundedIn->diffInMinutes($roundedOut);
+        $totalMinutes = abs($roundedIn->diffInMinutes($roundedOut));
         $breakMinutes = $this->calculateBreakMinutes($breaks);
 
         return max(0, $totalMinutes - $breakMinutes);
@@ -149,7 +149,7 @@ class TimeService
         $roundedIn = $this->roundTime($effectiveClockIn, $rounding['rounding_unit'], $rounding['clock_in_rounding']);
         $roundedOut = $this->roundTime($clockOut, $rounding['rounding_unit'], $rounding['clock_out_rounding']);
 
-        $totalMinutes = $roundedIn->diffInMinutes($roundedOut);
+        $totalMinutes = abs($roundedIn->diffInMinutes($roundedOut));
         $breakMinutes = $this->calculateBreakMinutes($breaks);
 
         return max(0, $totalMinutes - $breakMinutes);

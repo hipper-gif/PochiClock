@@ -8,7 +8,7 @@
             <p class="text-gray-500 mt-2">勤怠管理システム</p>
         </div>
 
-        <form method="POST" action="{{ url('/login') }}">
+        <form method="POST" action="{{ route('login') }}">
             @csrf
 
             <div class="mb-4">

@@ -68,9 +68,14 @@ class QrScannerController extends Controller
             }
         }
 
+        $sessionNumber = $user->attendances()
+            ->whereDate('clock_in', $today)
+            ->max('session_number') ?? 0;
+
         Attendance::create([
             'user_id' => $user->id,
             'clock_in' => Carbon::now(),
+            'session_number' => $sessionNumber + 1,
         ]);
 
         return response()->json([

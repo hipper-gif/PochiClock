@@ -77,22 +77,25 @@ class PaidLeaveService
      */
     public function useDays(User $user, float $days): void
     {
-        $remaining = $days;
-        $balances = PaidLeaveBalance::where('user_id', $user->id)
-            ->active()
-            ->whereColumn('used_days', '<', 'granted_days')
-            ->orderBy('grant_date')
-            ->get();
+        DB::transaction(function () use ($user, $days) {
+            $remaining = $days;
+            $balances = PaidLeaveBalance::where('user_id', $user->id)
+                ->active()
+                ->whereColumn('used_days', '<', 'granted_days')
+                ->orderBy('grant_date')
+                ->lockForUpdate()
+                ->get();
 
-        foreach ($balances as $balance) {
-            $available = (float) $balance->granted_days - (float) $balance->used_days;
-            $use = min($remaining, $available);
-            $balance->increment('used_days', $use);
-            $remaining -= $use;
-            if ($remaining <= 0) {
-                break;
+            foreach ($balances as $balance) {
+                $available = (float) $balance->granted_days - (float) $balance->used_days;
+                $use = min($remaining, $available);
+                $balance->increment('used_days', $use);
+                $remaining -= $use;
+                if ($remaining <= 0) {
+                    break;
+                }
             }
-        }
+        });
     }
 
     /**
@@ -100,21 +103,24 @@ class PaidLeaveService
      */
     public function returnDays(User $user, float $days): void
     {
-        $remaining = $days;
-        $balances = PaidLeaveBalance::where('user_id', $user->id)
-            ->active()
-            ->where('used_days', '>', 0)
-            ->orderByDesc('grant_date')
-            ->get();
+        DB::transaction(function () use ($user, $days) {
+            $remaining = $days;
+            $balances = PaidLeaveBalance::where('user_id', $user->id)
+                ->active()
+                ->where('used_days', '>', 0)
+                ->orderByDesc('grant_date')
+                ->lockForUpdate()
+                ->get();
 
-        foreach ($balances as $balance) {
-            $canReturn = (float) $balance->used_days;
-            $returnAmount = min($remaining, $canReturn);
-            $balance->decrement('used_days', $returnAmount);
-            $remaining -= $returnAmount;
-            if ($remaining <= 0) {
-                break;
+            foreach ($balances as $balance) {
+                $canReturn = (float) $balance->used_days;
+                $returnAmount = min($remaining, $canReturn);
+                $balance->decrement('used_days', $returnAmount);
+                $remaining -= $returnAmount;
+                if ($remaining <= 0) {
+                    break;
+                }
             }
-        }
+        });
     }
 }

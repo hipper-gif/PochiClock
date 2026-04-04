@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Route;
 // ルートリダイレクト
 Route::get('/', function () {
     if (\App\Models\User::count() === 0) {
-        return redirect('/setup');
+        return redirect()->route('setup.index');
     }
-    return auth()->check() ? redirect('/dashboard') : redirect('/login');
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
 // 初期セットアップ（ユーザーが0人のときのみ有効）

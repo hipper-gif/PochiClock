@@ -15,7 +15,7 @@
     </div>
 
     <div class="mt-12">
-        <a href="{{ url('/login') }}" class="text-gray-500 text-sm hover:text-gray-300">管理者ログイン</a>
+        <a href="{{ route('login') }}" class="text-gray-500 text-sm hover:text-gray-300">管理者ログイン</a>
     </div>
 </div>
 @endsection
