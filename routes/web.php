@@ -29,20 +29,6 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// デバッグ用テストルート（本番では削除）
-Route::get('/test-noauth', function () {
-    return response('OK: no auth', 200, ['Content-Type' => 'text/plain']);
-});
-Route::get('/test-auth-only', function () {
-    if (!auth()->check()) return response('Not logged in', 401, ['Content-Type' => 'text/plain']);
-    return response('OK: ' . auth()->user()->name, 200, ['Content-Type' => 'text/plain']);
-})->middleware('auth');
-Route::get('/test-auth-tenant', function () {
-    if (!auth()->check()) return response('Not logged in', 401, ['Content-Type' => 'text/plain']);
-    $u = auth()->user();
-    return response('OK: ' . $u->name . ' tenant:' . ($u->tenant_id ?? 'NULL'), 200, ['Content-Type' => 'text/plain']);
-})->middleware(['auth', \App\Http\Middleware\SetTenant::class]);
-
 // 認証必須
 Route::middleware('auth')->group(function () {
     // ダッシュボード
