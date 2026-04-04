@@ -9,27 +9,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // A. UNIQUE制約をテナント複合ユニークに変更
-
-        Schema::table('departments', function (Blueprint $table) {
-            $table->dropUnique('departments_name_unique');
-            $table->unique(['tenant_id', 'name'], 'departments_tenant_id_name_unique');
-        });
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropUnique('users_employee_number_unique');
-            $table->unique(['tenant_id', 'employee_number'], 'users_tenant_id_employee_number_unique');
-        });
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropUnique('users_email_unique');
-            $table->unique(['tenant_id', 'email'], 'users_tenant_id_email_unique');
-        });
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropUnique('users_kiosk_code_unique');
-            $table->unique(['tenant_id', 'kiosk_code'], 'users_tenant_id_kiosk_code_unique');
-        });
+        // A. job_groups: add tenant_id first (was missing), then add UNIQUE
+        if (!Schema::hasColumn('job_groups', 'tenant_id')) {
+            Schema::table('job_groups', function (Blueprint $table) {
+                $table->uuid('tenant_id')->nullable()->after('id');
+                $table->foreign('tenant_id')->references('id')->on('tenants')->restrictOnDelete();
+            });
+        }
 
         Schema::table('job_groups', function (Blueprint $table) {
             $table->unique(['tenant_id', 'name'], 'job_groups_tenant_id_name_unique');
@@ -40,14 +26,12 @@ return new class extends Migration
         });
 
         // B. tenant_id FK を restrictOnDelete に統一
-
         $tablesToFix = [
             'comp_leaves',
             'paid_leaves',
             'paid_leave_balances',
             'shift_templates',
             'shift_assignments',
-            'job_groups',
         ];
 
         foreach ($tablesToFix as $tableName) {
@@ -75,7 +59,6 @@ return new class extends Migration
         }
 
         // D. work_rules から department_id と DEPARTMENT scope を削除
-
         DB::table('work_rules')
             ->where('scope', 'DEPARTMENT')
             ->update(['scope' => 'JOB_GROUP']);
@@ -91,9 +74,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        // D. Restore department_id and DEPARTMENT scope
+        // D. Restore
         DB::statement("ALTER TABLE work_rules MODIFY COLUMN scope ENUM('SYSTEM', 'DEPARTMENT', 'JOB_GROUP', 'USER')");
-
         Schema::table('work_rules', function (Blueprint $table) {
             $table->uuid('department_id')->nullable()->after('scope');
             $table->foreign('department_id')->references('id')->on('departments')->cascadeOnDelete();
@@ -101,17 +83,19 @@ return new class extends Migration
         });
 
         // C. Restore sessions tenant_id
-        Schema::table('sessions', function (Blueprint $table) {
-            $table->uuid('tenant_id')->nullable()->after('id');
-            $table->index('tenant_id');
-        });
+        if (!Schema::hasColumn('sessions', 'tenant_id')) {
+            Schema::table('sessions', function (Blueprint $table) {
+                $table->uuid('tenant_id')->nullable()->after('id');
+                $table->index('tenant_id');
+            });
+        }
 
-        // B. Revert FK to nullOnDelete
+        // B. Revert FK
         Schema::table('audit_logs', function (Blueprint $table) {
             $table->dropForeign(['tenant_id']);
         });
 
-        $tablesToRevert = ['comp_leaves', 'paid_leaves', 'paid_leave_balances', 'shift_templates', 'shift_assignments', 'job_groups'];
+        $tablesToRevert = ['comp_leaves', 'paid_leaves', 'paid_leave_balances', 'shift_templates', 'shift_assignments'];
         foreach ($tablesToRevert as $tableName) {
             Schema::table($tableName, function (Blueprint $table) {
                 $table->dropForeign(['tenant_id']);
@@ -119,13 +103,17 @@ return new class extends Migration
             });
         }
 
-        // A. Restore original UNIQUE constraints
+        // A. Revert
         Schema::table('shift_templates', function (Blueprint $table) {
             $table->dropUnique('shift_templates_tenant_id_name_unique');
         });
         Schema::table('job_groups', function (Blueprint $table) {
             $table->dropUnique('job_groups_tenant_id_name_unique');
+            $table->dropForeign(['tenant_id']);
+            $table->dropColumn('tenant_id');
         });
+
+        // Restore original UNIQUE constraints
         Schema::table('users', function (Blueprint $table) {
             $table->dropUnique('users_tenant_id_kiosk_code_unique');
             $table->unique('kiosk_code');
