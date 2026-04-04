@@ -49,12 +49,15 @@ return new class extends Migration
             });
         }
 
-        // audit_logs: FK追加
-        Schema::table('audit_logs', function (Blueprint $table) {
-            $table->foreign('tenant_id')
-                ->references('id')->on('tenants')
-                ->restrictOnDelete();
-        });
+        // audit_logs: FK追加（存在しなければ）
+        $auditFks = collect(DB::select("SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'audit_logs' AND CONSTRAINT_TYPE = 'FOREIGN KEY'"))->pluck('CONSTRAINT_NAME');
+        if (!$auditFks->contains('audit_logs_tenant_id_foreign')) {
+            Schema::table('audit_logs', function (Blueprint $table) {
+                $table->foreign('tenant_id')
+                    ->references('id')->on('tenants')
+                    ->restrictOnDelete();
+            });
+        }
 
         // C. sessions テーブルから不要な tenant_id を削除
         if (Schema::hasColumn('sessions', 'tenant_id')) {
