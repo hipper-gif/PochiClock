@@ -30,8 +30,6 @@ trait BelongsToTenant
             return app('current_tenant_id');
         }
 
-        $user = auth()->user();
-
-        return $user?->tenant_id;
+        return null;
     }
 }
