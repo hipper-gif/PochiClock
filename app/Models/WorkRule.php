@@ -6,12 +6,13 @@ use App\Enums\WorkRuleScope;
 use App\Traits\Auditable;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WorkRule extends Model
 {
-    use HasUuids, BelongsToTenant, Auditable;
+    use HasUuids, HasFactory, BelongsToTenant, Auditable;
 
     protected $fillable = [
         'tenant_id',

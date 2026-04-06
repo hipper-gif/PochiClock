@@ -9,6 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // This migration uses MySQL-specific syntax (SHOW INDEX, MODIFY COLUMN ENUM, information_schema)
+        if (DB::connection()->getDriverName() === 'sqlite') return;
+
         // A. job_groups: add tenant_id first (was missing), then add UNIQUE
         if (!Schema::hasColumn('job_groups', 'tenant_id')) {
             Schema::table('job_groups', function (Blueprint $table) {
@@ -84,6 +87,7 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') return;
         // D. Restore
         DB::statement("ALTER TABLE work_rules MODIFY COLUMN scope ENUM('SYSTEM', 'DEPARTMENT', 'JOB_GROUP', 'USER')");
         Schema::table('work_rules', function (Blueprint $table) {

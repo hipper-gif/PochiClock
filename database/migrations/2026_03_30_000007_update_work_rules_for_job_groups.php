@@ -17,12 +17,16 @@ return new class extends Migration
 
         // Update scope enum: SYSTEM, DEPARTMENT, JOB_GROUP, USER
         // Keep DEPARTMENT temporarily for backward compatibility during migration
-        DB::statement("ALTER TABLE work_rules MODIFY COLUMN scope ENUM('SYSTEM', 'DEPARTMENT', 'JOB_GROUP', 'USER')");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE work_rules MODIFY COLUMN scope ENUM('SYSTEM', 'DEPARTMENT', 'JOB_GROUP', 'USER')");
+        }
     }
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE work_rules MODIFY COLUMN scope ENUM('SYSTEM', 'DEPARTMENT', 'USER')");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE work_rules MODIFY COLUMN scope ENUM('SYSTEM', 'DEPARTMENT', 'USER')");
+        }
 
         Schema::table('work_rules', function (Blueprint $table) {
             $table->dropForeign(['job_group_id']);
