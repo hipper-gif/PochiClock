@@ -55,7 +55,13 @@ class DashboardController extends Controller
         $totalDailyWorkingMinutes = $this->timeService->calculateDailyWorkingMinutes($todayAttendances, $rounding, $rule);
 
         if ($attendance) {
-            $breakMinutes = $this->timeService->calculateBreakMinutes($attendance->breakRecords);
+            // Use effective break (rule-based if no BreakRecords)
+            $grossMin = $attendance->clock_out
+                ? abs($attendance->clock_in->diffInMinutes($attendance->clock_out))
+                : null;
+            $breakMinutes = $this->timeService->calculateEffectiveBreakMinutes(
+                $attendance->breakRecords, $grossMin, $rule
+            );
             $breakCount = $attendance->breakRecords->count();
 
             if ($attendance->clock_out) {
@@ -136,7 +142,9 @@ class DashboardController extends Controller
                         $record->clock_in, $record->clock_out, $rounding, $rule, $record->session_number ?? 1
                     );
                     $bindingMin = abs($rounded['rounded_clock_in']->diffInMinutes($rounded['rounded_clock_out']));
-                    $breakMin = $this->timeService->calculateBreakMinutes($record->breakRecords);
+                    $breakMin = $this->timeService->calculateEffectiveBreakMinutes(
+                        $record->breakRecords, $bindingMin, $rule
+                    );
                     $totalBindingMinutes += $bindingMin;
                     $totalBreakMinutes += $breakMin;
                     $totalWorkingMinutes += max(0, $bindingMin - $breakMin);

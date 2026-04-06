@@ -36,6 +36,64 @@ class TimeService
         return $total;
     }
 
+    /**
+     * Calculate effective break minutes considering BreakRecords and WorkRule defaults.
+     *
+     * Priority:
+     * 1. If BreakRecords exist (manually recorded) → use actual break total
+     * 2. If break_tiers defined → apply tiered break based on working hours
+     * 3. Otherwise → use default_break_minutes from WorkRule
+     */
+    public function calculateEffectiveBreakMinutes(
+        Collection $breaks,
+        ?int $grossWorkingMinutes,
+        array $rule
+    ): int {
+        // If actual break records exist, use them
+        $actualBreak = $this->calculateBreakMinutes($breaks);
+        if ($actualBreak > 0 || $breaks->whereNull('break_end')->isNotEmpty()) {
+            return $actualBreak;
+        }
+
+        // No break records → apply rule-based break
+        $tiers = $rule['break_tiers'] ?? [];
+
+        if (!empty($tiers) && $grossWorkingMinutes !== null) {
+            return $this->calculateTieredBreakMinutes($grossWorkingMinutes, $tiers);
+        }
+
+        // Fallback: default_break_minutes (only if there was actual work)
+        if ($grossWorkingMinutes !== null && $grossWorkingMinutes > 0) {
+            return (int) ($rule['default_break_minutes'] ?? 0);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Calculate break minutes from tiered rules.
+     * break_tiers format: [{"thresholdHours": 6, "breakMinutes": 45}, {"thresholdHours": 8, "breakMinutes": 60}]
+     * Applies the tier where grossWorkingMinutes >= threshold (highest matching tier wins).
+     */
+    public function calculateTieredBreakMinutes(int $grossWorkingMinutes, array $tiers): int
+    {
+        if (empty($tiers)) return 0;
+
+        $grossHours = $grossWorkingMinutes / 60;
+        $breakMinutes = 0;
+
+        // Sort tiers by threshold ascending
+        usort($tiers, fn($a, $b) => ($a['thresholdHours'] ?? 0) <=> ($b['thresholdHours'] ?? 0));
+
+        foreach ($tiers as $tier) {
+            if ($grossHours >= ($tier['thresholdHours'] ?? 0)) {
+                $breakMinutes = (int) ($tier['breakMinutes'] ?? 0);
+            }
+        }
+
+        return $breakMinutes;
+    }
+
     public function calculateWorkingMinutes(Carbon $clockIn, ?Carbon $clockOut, Collection $breaks): ?int
     {
         if (!$clockOut) {
@@ -131,6 +189,7 @@ class TimeService
 
     /**
      * Calculate working minutes with early cutoff and rounding applied.
+     * Uses effective break (rule-based if no BreakRecords exist).
      */
     public function calculateWorkingMinutesWithCutoff(
         Carbon $clockIn,
@@ -149,10 +208,10 @@ class TimeService
         $roundedIn = $this->roundTime($effectiveClockIn, $rounding['rounding_unit'], $rounding['clock_in_rounding']);
         $roundedOut = $this->roundTime($clockOut, $rounding['rounding_unit'], $rounding['clock_out_rounding']);
 
-        $totalMinutes = abs($roundedIn->diffInMinutes($roundedOut));
-        $breakMinutes = $this->calculateBreakMinutes($breaks);
+        $grossMinutes = abs($roundedIn->diffInMinutes($roundedOut));
+        $breakMinutes = $this->calculateEffectiveBreakMinutes($breaks, $grossMinutes, $rule);
 
-        return max(0, $totalMinutes - $breakMinutes);
+        return max(0, $grossMinutes - $breakMinutes);
     }
 
     /**

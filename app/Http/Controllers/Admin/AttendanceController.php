@@ -168,7 +168,8 @@ class AttendanceController extends Controller
                     $workMin = $this->timeService->calculateWorkingMinutesWithCutoff(
                         $att->clock_in, $att->clock_out, $att->breakRecords, $rounding, $rule, $att->session_number ?? 1
                     );
-                    $breakMin = $this->timeService->calculateBreakMinutes($att->breakRecords);
+                    $grossMin = $att->clock_out ? abs($att->clock_in->diffInMinutes($att->clock_out)) : null;
+                    $breakMin = $this->timeService->calculateEffectiveBreakMinutes($att->breakRecords, $grossMin, $rule);
 
                     // Standard day minutes from work rule (work_start to work_end minus default break)
                     [$startH, $startM] = explode(':', $rule['work_start_time']);
@@ -215,10 +216,11 @@ class AttendanceController extends Controller
                         'clock_in_rounding' => $rule['clock_in_rounding'],
                         'clock_out_rounding' => $rule['clock_out_rounding'],
                     ];
-                    $breakMin = $this->timeService->calculateBreakMinutes($att->breakRecords);
                     $workMin = $this->timeService->calculateWorkingMinutesWithCutoff(
                         $att->clock_in, $att->clock_out, $att->breakRecords, $rounding, $rule, $att->session_number ?? 1
                     );
+                    $grossMin = $att->clock_out ? abs($att->clock_in->diffInMinutes($att->clock_out)) : null;
+                    $breakMin = $this->timeService->calculateEffectiveBreakMinutes($att->breakRecords, $grossMin, $rule);
                     $roundedTimes = $this->timeService->getRoundedTimesWithCutoff($att->clock_in, $att->clock_out, $rounding, $rule, $att->session_number ?? 1);
 
                     fputcsv($file, [
