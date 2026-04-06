@@ -151,6 +151,75 @@ foreach ($breakRows as $br) {
     $breaksByAttendance[$br['attendance_id']][] = $br;
 }
 
+// ── WorkRule取得（ユーザー別ルール解決）──
+// 優先順: USER > JOB_GROUP (user.job_group_id or dept.job_group_id) > SYSTEM > DEFAULT
+$workRulesRaw = $pdo->query("SELECT * FROM work_rules ORDER BY scope")->fetchAll();
+$userRows = $pdo->query("SELECT u.id, u.name, u.job_group_id, u.department_id, d.job_group_id as dept_job_group_id
+    FROM users u LEFT JOIN departments d ON d.id = u.department_id")->fetchAll();
+
+$systemRule = null;
+$jobGroupRules = [];
+$userRules = [];
+foreach ($workRulesRaw as $wr) {
+    if ($wr['scope'] === 'SYSTEM') $systemRule = $wr;
+    elseif ($wr['scope'] === 'JOB_GROUP' && $wr['job_group_id']) $jobGroupRules[$wr['job_group_id']] = $wr;
+    elseif ($wr['scope'] === 'USER' && $wr['user_id']) $userRules[$wr['user_id']] = $wr;
+}
+
+$defaultRule = [
+    'default_break_minutes' => 60,
+    'break_tiers' => null,
+    'early_clock_in_cutoff' => null,
+    'early_clock_in_cutoff_pm' => null,
+];
+
+function resolveWorkRule(string $userId, array $userRows, array $userRules, array $jobGroupRules, ?array $systemRule, array $defaultRule): array
+{
+    if (isset($userRules[$userId])) return $userRules[$userId];
+
+    $user = null;
+    foreach ($userRows as $u) {
+        if ($u['id'] === $userId) { $user = $u; break; }
+    }
+    if ($user) {
+        $jgId = $user['job_group_id'] ?: $user['dept_job_group_id'];
+        if ($jgId && isset($jobGroupRules[$jgId])) return $jobGroupRules[$jgId];
+    }
+
+    return $systemRule ?? $defaultRule;
+}
+
+/**
+ * Effective break: mimic TimeService::calculateEffectiveBreakMinutes()
+ */
+function calculateEffectiveBreak(float $actualBreakMin, int $grossWorkingMin, array $rule): int
+{
+    if ($actualBreakMin > 0) return (int) $actualBreakMin;
+
+    $tiers = $rule['break_tiers'] ?? null;
+    if (is_string($tiers)) $tiers = json_decode($tiers, true);
+
+    if (!empty($tiers) && $grossWorkingMin > 0) {
+        usort($tiers, fn($a, $b) => ($a['thresholdHours'] ?? 0) <=> ($b['thresholdHours'] ?? 0));
+        $breakMin = 0;
+        $grossH = $grossWorkingMin / 60;
+        foreach ($tiers as $t) {
+            if ($grossH >= ($t['thresholdHours'] ?? 0)) {
+                $breakMin = (int) ($t['breakMinutes'] ?? 0);
+            }
+        }
+        return $breakMin;
+    }
+
+    if ($grossWorkingMin > 0) {
+        return (int) ($rule['default_break_minutes'] ?? 0);
+    }
+
+    return 0;
+}
+
+echo "WorkRule: SYSTEM + " . count($jobGroupRules) . " JOB_GROUP + " . count($userRules) . " USER ルール\n";
+
 // ── PochiClockデータを name+date でインデックス ──
 // 名前の正規化関数: 全角/半角スペースを全て除去
 function normalizeName(string $name): string
@@ -175,23 +244,27 @@ foreach ($pochiRows as $row) {
     $date = $clockIn->format('Y-m-d'); // JST date
     $key = $normName . '|' . $date;
 
-    // 休憩時間を計算（分）
-    $breakMinutes = 0;
+    // 休憩時間を計算（BreakRecord実績）
+    $actualBreakMinutes = 0;
     if (isset($breaksByAttendance[$row['attendance_id']])) {
         foreach ($breaksByAttendance[$row['attendance_id']] as $br) {
             if ($br['break_start'] && $br['break_end']) {
                 $bs = new DateTime($br['break_start'], $utcTz);
                 $be = new DateTime($br['break_end'], $utcTz);
-                $breakMinutes += ($be->getTimestamp() - $bs->getTimestamp()) / 60;
+                $actualBreakMinutes += ($be->getTimestamp() - $bs->getTimestamp()) / 60;
             }
         }
     }
 
-    // 実働（分）= 出勤〜退勤 - 休憩
+    // WorkRuleベースの実効休憩（BreakRecordなし→ルールから自動計算）
+    $rule = resolveWorkRule($row['user_id'], $userRows, $userRules, $jobGroupRules, $systemRule, $defaultRule);
+    $grossMinutes = $clockOut ? ($clockOut->getTimestamp() - $clockIn->getTimestamp()) / 60 : 0;
+    $breakMinutes = calculateEffectiveBreak($actualBreakMinutes, (int)$grossMinutes, $rule);
+
+    // 実働（分）= 出勤〜退勤 - 実効休憩
     $workingMinutes = null;
     if ($clockOut) {
-        $totalMinutes = ($clockOut->getTimestamp() - $clockIn->getTimestamp()) / 60;
-        $workingMinutes = $totalMinutes - $breakMinutes;
+        $workingMinutes = max(0, $grossMinutes - $breakMinutes);
     }
 
     $entry = [
