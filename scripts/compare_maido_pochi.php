@@ -66,19 +66,20 @@ $handle = fopen($csvPath, 'r');
 $header = fgetcsv($handle); // skip header
 
 while (($row = fgetcsv($handle)) !== false) {
-    if (count($row) < 11) continue;
+    if (count($row) < 12) continue;
 
     $rec = [
         'maido_id'   => $row[0],
         'name'       => $row[1],
         'date'       => $row[2],
-        'clock_in'   => $row[4],
-        'clock_out'  => $row[5],
-        'subtotal_h' => (float)$row[6],
-        'total_h'    => (float)$row[7],
-        'break_h'    => (float)$row[8],
-        'sched_break_h' => (float)$row[9],
-        'working_h'  => (float)$row[10],
+        'session'    => (int)$row[4],
+        'clock_in'   => $row[5],
+        'clock_out'  => $row[6],
+        'subtotal_h' => (float)$row[7],
+        'total_h'    => (float)$row[8],
+        'break_h'    => (float)$row[9],
+        'sched_break_h' => (float)$row[10],
+        'working_h'  => (float)$row[11],
     ];
     $maidoRecords[] = $rec;
 }
@@ -343,141 +344,95 @@ foreach ($maidoByNameDate as $key => $maidoEntries) {
     $processedPochiKeys[$key] = true;
 
     if (!isset($pochiByNameDate[$key])) {
-        // Pochiに存在しない
-        foreach ($maidoEntries as $m) {
-            $missingInPochi++;
-            $results[] = [
-                'name'            => $m['name'],
-                'date'            => $m['date'],
-                'status'          => 'MISSING_IN_POCHI',
-                'maido_in'        => $m['clock_in'],
-                'maido_out'       => $m['clock_out'],
-                'maido_working_h' => $m['working_h'],
-                'pochi_in'        => '',
-                'pochi_out'       => '',
-                'pochi_working_h' => '',
-                'diff_in'         => '',
-                'diff_out'        => '',
-                'diff_working'    => '',
-            ];
-        }
+        // Pochiに存在しない（日単位で1件としてカウント）
+        $m = $maidoEntries[0];
+        $missingInPochi++;
+        $results[] = [
+            'name'            => $m['name'],
+            'date'            => $m['date'],
+            'status'          => 'MISSING_IN_POCHI',
+            'maido_in'        => $m['clock_in'],
+            'maido_out'       => $m['clock_out'],
+            'maido_working_h' => $m['working_h'] ?: $m['subtotal_h'],
+            'pochi_in'        => '',
+            'pochi_out'       => '',
+            'pochi_working_h' => '',
+            'diff_in'         => '',
+            'diff_out'        => '',
+            'diff_working'    => '',
+        ];
         continue;
     }
 
     $pochiEntries = $pochiByNameDate[$key];
 
-    // セッション数が同じ場合は1対1で比較、異なる場合はまいどの合計とPochiの合計を比較
-    // まいどは通常1日1レコード（合計値）、Pochiは複数セッションの場合あり
+    $maidoSessions = count($maidoEntries);
+    $pochiSessions = count($pochiEntries);
 
-    foreach ($maidoEntries as $mi => $m) {
-        // まいどの1レコードに対応するPochiデータを探す
-        // 配達のように1日2回出勤の場合、まいどは合算している可能性がある
-        // → まいどのレコードが1つでPochiが複数の場合は合算比較
+    // まいどの日合計実働 (working_h はセッション1に日合計として記録)
+    $maidoTotalWorkH = $maidoEntries[0]['working_h'];
 
-        if (count($maidoEntries) === 1 && count($pochiEntries) > 1) {
-            // まいど1レコード vs Pochi複数セッション → 合算して比較
-            $pochiFirstIn  = null;
-            $pochiLastOut  = null;
-            $pochiTotalWorkMin = 0;
-            $pochiTotalBreakMin = 0;
+    // Pochiの日合計
+    $pochiTotalWorkMin = 0;
+    $pochiFirstIn = null;
+    $pochiLastOut = null;
+    foreach ($pochiEntries as $p) {
+        if ($pochiFirstIn === null || ($p['clock_in'] && $p['clock_in'] < $pochiFirstIn)) $pochiFirstIn = $p['clock_in'];
+        if ($p['clock_out'] !== null && ($pochiLastOut === null || $p['clock_out'] > $pochiLastOut)) $pochiLastOut = $p['clock_out'];
+        if ($p['working_minutes'] !== null) $pochiTotalWorkMin += $p['working_minutes'];
+    }
+    $pochiWorkHour = round($pochiTotalWorkMin / 60, 2);
 
-            foreach ($pochiEntries as $p) {
-                if ($pochiFirstIn === null || $p['clock_in'] < $pochiFirstIn) {
-                    $pochiFirstIn = $p['clock_in'];
-                }
-                if ($p['clock_out'] !== null && ($pochiLastOut === null || $p['clock_out'] > $pochiLastOut)) {
-                    $pochiLastOut = $p['clock_out'];
-                }
-                if ($p['working_minutes'] !== null) {
-                    $pochiTotalWorkMin += $p['working_minutes'];
-                }
-                $pochiTotalBreakMin += $p['break_minutes'];
-            }
+    $note = '';
+    if ($maidoSessions !== $pochiSessions) {
+        $note = "まいど{$maidoSessions}セッション/Pochi{$pochiSessions}セッション";
+    }
 
-            $maidoWorkMin  = $m['working_h'] * 60;
-            $pochiWorkHour = round($pochiTotalWorkMin / 60, 2);
-            $diffWork      = round($m['working_h'] - $pochiWorkHour, 2);
+    if ($maidoSessions === $pochiSessions) {
+        // セッション数一致 → 日合計で比較
+        $diffWork = round($maidoTotalWorkH - $pochiWorkHour, 2);
+        $diffIn = compareTimes($maidoEntries[0]['clock_in'], $pochiFirstIn);
+        $diffOut = compareTimes($maidoEntries[$maidoSessions-1]['clock_out'], $pochiLastOut);
+    } else {
+        // セッション数不一致 → 利用可能セッション分のみ比較
+        // Pochiのセッション1のworkingと、まいどのセッション1のsubtotal_hで比較
+        // (subtotal_hは配達AM=3hなど。break0なのでPochiのworkingと一致するはず)
+        $m1 = $maidoEntries[0];
+        $p1 = $pochiEntries[0];
+        $pochiS1WorkH = $p1['working_minutes'] !== null ? round($p1['working_minutes'] / 60, 2) : 0;
+        $diffWork = round($m1['subtotal_h'] - $pochiS1WorkH, 2);
+        $diffIn = compareTimes($m1['clock_in'], $p1['clock_in']);
+        $diffOut = compareTimes($m1['clock_out'], $p1['clock_out']);
+        $maidoTotalWorkH = $m1['subtotal_h'];
+        $pochiWorkHour = $pochiS1WorkH;
+    }
 
-            $diffIn  = compareTimes($m['clock_in'], $pochiFirstIn);
-            $diffOut = compareTimes($m['clock_out'], $pochiLastOut);
+    $isMismatch = (abs($diffWork) > 0.01);
+    if ($isMismatch) { $mismatchCount++; $status = 'MISMATCH'; }
+    else { $matchCount++; $status = 'OK'; }
 
-            $isMismatch = (abs($diffWork) > 0.01);
+    $results[] = [
+        'name' => $maidoEntries[0]['name'], 'date' => $maidoEntries[0]['date'], 'status' => $status,
+        'maido_in' => $maidoEntries[0]['clock_in'], 'maido_out' => $maidoEntries[$maidoSessions-1]['clock_out'],
+        'maido_working_h' => $maidoTotalWorkH,
+        'pochi_in' => $pochiFirstIn ?? '', 'pochi_out' => $pochiLastOut ?? '',
+        'pochi_working_h' => $pochiWorkHour,
+        'diff_in' => $diffIn, 'diff_out' => $diffOut, 'diff_working' => $diffWork,
+        'note' => $note,
+    ];
 
-            if ($isMismatch) {
-                $mismatchCount++;
-                $status = 'MISMATCH';
-            } else {
-                $matchCount++;
-                $status = 'OK';
-            }
-
+    // 午後セッション欠落を別途記録
+    if ($maidoSessions > $pochiSessions) {
+        for ($si = $pochiSessions; $si < $maidoSessions; $si++) {
+            $m = $maidoEntries[$si];
+            $missingInPochi++;
             $results[] = [
-                'name'            => $m['name'],
-                'date'            => $m['date'],
-                'status'          => $status,
-                'maido_in'        => $m['clock_in'],
-                'maido_out'       => $m['clock_out'],
-                'maido_working_h' => $m['working_h'],
-                'pochi_in'        => $pochiFirstIn ?? '',
-                'pochi_out'       => $pochiLastOut ?? '',
-                'pochi_working_h' => $pochiWorkHour,
-                'diff_in'         => $diffIn,
-                'diff_out'        => $diffOut,
-                'diff_working'    => $diffWork,
-                'note'            => "Pochi {$pochiEntries[0]['session_number']}セッション合算",
-            ];
-        } else {
-            // 1対1で比較
-            $p = $pochiEntries[$mi] ?? null;
-            if ($p === null) {
-                $missingInPochi++;
-                $results[] = [
-                    'name'            => $m['name'],
-                    'date'            => $m['date'],
-                    'status'          => 'MISSING_IN_POCHI',
-                    'maido_in'        => $m['clock_in'],
-                    'maido_out'       => $m['clock_out'],
-                    'maido_working_h' => $m['working_h'],
-                    'pochi_in'        => '',
-                    'pochi_out'       => '',
-                    'pochi_working_h' => '',
-                    'diff_in'         => '',
-                    'diff_out'        => '',
-                    'diff_working'    => '',
-                ];
-                continue;
-            }
-
-            $maidoWorkMin  = $m['working_h'] * 60;
-            $pochiWorkHour = $p['working_minutes'] !== null ? round($p['working_minutes'] / 60, 2) : null;
-            $diffWork      = $pochiWorkHour !== null ? round($m['working_h'] - $pochiWorkHour, 2) : null;
-
-            $diffIn  = compareTimes($m['clock_in'], $p['clock_in']);
-            $diffOut = compareTimes($m['clock_out'], $p['clock_out']);
-
-            $isMismatch = ($diffWork !== null && abs($diffWork) > 0.01);
-
-            if ($isMismatch) {
-                $mismatchCount++;
-                $status = 'MISMATCH';
-            } else {
-                $matchCount++;
-                $status = 'OK';
-            }
-
-            $results[] = [
-                'name'            => $m['name'],
-                'date'            => $m['date'],
-                'status'          => $status,
-                'maido_in'        => $m['clock_in'],
-                'maido_out'       => $m['clock_out'],
-                'maido_working_h' => $m['working_h'],
-                'pochi_in'        => $p['clock_in'] ?? '',
-                'pochi_out'       => $p['clock_out'] ?? '',
-                'pochi_working_h' => $pochiWorkHour ?? '',
-                'diff_in'         => $diffIn,
-                'diff_out'        => $diffOut,
-                'diff_working'    => $diffWork ?? '',
+                'name' => $m['name'], 'date' => $m['date'], 'status' => 'MISSING_IN_POCHI',
+                'maido_in' => $m['clock_in'], 'maido_out' => $m['clock_out'],
+                'maido_working_h' => $m['subtotal_h'],
+                'pochi_in' => '', 'pochi_out' => '', 'pochi_working_h' => '',
+                'diff_in' => '', 'diff_out' => '', 'diff_working' => '',
+                'note' => '午後セッション欠落',
             ];
         }
     }

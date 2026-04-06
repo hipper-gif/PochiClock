@@ -75,7 +75,7 @@ echo "Found " . count($staffList) . " staff.\n";
 $outputFile = __DIR__ . "/../storage/maido_{$year}_{$monthPadded}.csv";
 $fp = fopen($outputFile, 'w');
 fwrite($fp, "\xEF\xBB\xBF");
-fputcsv($fp, ['maido_id', 'name', 'date', 'day_of_week', 'clock_in', 'clock_out', 'subtotal_h', 'total_h', 'break_h', 'scheduled_break_h', 'working_h']);
+fputcsv($fp, ['maido_id', 'name', 'date', 'day_of_week', 'session', 'clock_in', 'clock_out', 'subtotal_h', 'total_h', 'break_h', 'scheduled_break_h', 'working_h']);
 
 $total = count($staffList);
 $i = 0;
@@ -111,42 +111,53 @@ foreach ($staffList as $staffId => $name) {
         preg_match_all('/<tr[^>]*>(.*?)<\/tr>/is', $table, $rows);
         if (count($rows[1]) < 10) continue;
 
+        $currentDate = null;
+        $currentDow = null;
+        $sessionNum = 0;
+
         foreach ($rows[1] as $row) {
             preg_match_all('/<t[dh][^>]*>(.*?)<\/t[dh]>/is', $row, $cells);
             $vals = array_map(fn($c) => trim(preg_replace('/\s+/', ' ', strip_tags(html_entity_decode($c)))), $cells[1]);
 
-            if (empty($vals) || count($vals) < 10) continue;
+            if (empty($vals)) continue;
 
-            // Parse date: "3/2 (月)" format
-            if (!preg_match('/(\d+)\/(\d+).*?\((.)\)/u', $vals[0] ?? '', $dateMatch)) {
-                continue;
+            // Check if this is a date row (main session) or a continuation row (PM session)
+            if (preg_match('/(\d+)\/(\d+).*?\((.)\)/u', $vals[0] ?? '', $dateMatch)) {
+                // Main row: has date, 12 columns
+                // vals: 0=date, 1=clock_in, 2=clock_out, 3=time1, 4=time2, 5=time3, 6=subtotal, 7=total, 8=break, 9=scheduled_break, 10=working, 11=edit
+                $currentDate = sprintf('%s-%s-%02d', $year, $monthPadded, (int)$dateMatch[2]);
+                $currentDow = $dateMatch[3];
+                $sessionNum = 1;
+                $foundData = true;
+
+                $clockIn = trim($vals[1] ?? '');
+                $clockOut = trim($vals[2] ?? '');
+                if (empty($clockIn) && empty($clockOut)) continue;
+
+                fputcsv($fp, [
+                    $staffId, $name, $currentDate, $currentDow, $sessionNum,
+                    $clockIn, $clockOut,
+                    str_replace([' h', ' '], '', $vals[6] ?? ''),  // subtotal
+                    str_replace([' h', ' '], '', $vals[7] ?? ''),  // total
+                    str_replace([' h', ' '], '', $vals[8] ?? ''),  // break
+                    str_replace([' h', ' '], '', $vals[9] ?? ''),  // scheduled break
+                    str_replace([' h', ' '], '', $vals[10] ?? ''), // working
+                ]);
+            } elseif ($currentDate && count($vals) >= 5 && preg_match('/^\d{1,2}:\d{2}$/', $vals[0] ?? '')) {
+                // Continuation row: PM session (no date, starts with clock_in time)
+                // vals: 0=clock_in, 1=clock_out, 2=time1, 3=time2, 4=time3, 5=subtotal
+                $sessionNum++;
+                $clockIn = trim($vals[0] ?? '');
+                $clockOut = trim($vals[1] ?? '');
+                if (empty($clockIn) && empty($clockOut)) continue;
+
+                fputcsv($fp, [
+                    $staffId, $name, $currentDate, $currentDow, $sessionNum,
+                    $clockIn, $clockOut,
+                    str_replace([' h', ' '], '', $vals[5] ?? ''),  // subtotal
+                    '', '', '', '',  // total/break/sched_break/working are on the main row only
+                ]);
             }
-            $foundData = true;
-
-            $day = (int)$dateMatch[2];
-            $dow = $dateMatch[3];
-            $date = sprintf('%s-%s-%02d', $year, $monthPadded, $day);
-
-            $clockIn = trim($vals[1] ?? '');
-            $clockOut = trim($vals[2] ?? '');
-
-            // Skip days with no data
-            if (empty($clockIn) && empty($clockOut)) continue;
-
-            // vals: 0=date, 1=clock_in, 2=clock_out, 3=time1, 4=time2, 5=time3, 6=subtotal, 7=total, 8=break, 9=scheduled_break, 10=working
-            fputcsv($fp, [
-                $staffId,
-                $name,
-                $date,
-                $dow,
-                $clockIn,
-                $clockOut,
-                str_replace([' h', ' '], '', $vals[6] ?? ''),  // subtotal
-                str_replace([' h', ' '], '', $vals[7] ?? ''),  // total
-                str_replace([' h', ' '], '', $vals[8] ?? ''),  // break
-                str_replace([' h', ' '], '', $vals[9] ?? ''),  // scheduled break
-                str_replace([' h', ' '], '', $vals[10] ?? ''), // working
-            ]);
         }
         break; // only need the first matching table
     }
