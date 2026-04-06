@@ -256,22 +256,27 @@ foreach ($pochiRows as $row) {
         }
     }
 
-    // WorkRuleベースの実効休憩（BreakRecordなし→ルールから自動計算）
+    // WorkRuleベースの丸め・休憩計算
     $rule = resolveWorkRule($row['user_id'], $userRows, $userRules, $jobGroupRules, $systemRule, $defaultRule);
-    $grossMinutes = $clockOut ? ($clockOut->getTimestamp() - $clockIn->getTimestamp()) / 60 : 0;
+
+    $roundingUnit = (int)($rule['rounding_unit'] ?? 1);
+    $roundedIn = roundTime($clockIn, $roundingUnit, $rule['clock_in_rounding'] ?? 'none');
+    $roundedOut = $clockOut ? roundTime($clockOut, $roundingUnit, $rule['clock_out_rounding'] ?? 'none') : null;
+
+    $grossMinutes = $roundedOut ? ($roundedOut->getTimestamp() - $roundedIn->getTimestamp()) / 60 : 0;
     $breakMinutes = calculateEffectiveBreak($actualBreakMinutes, (int)$grossMinutes, $rule);
 
-    // 実働（分）= 出勤〜退勤 - 実効休憩
+    // 実働（分）= 丸め後出勤〜丸め後退勤 - 実効休憩
     $workingMinutes = null;
-    if ($clockOut) {
+    if ($roundedOut) {
         $workingMinutes = max(0, $grossMinutes - $breakMinutes);
     }
 
     $entry = [
         'user_name'       => $row['user_name'],
         'date'            => $date,
-        'clock_in'        => $clockIn->format('H:i'),
-        'clock_out'       => $clockOut ? $clockOut->format('H:i') : null,
+        'clock_in'        => $roundedIn->format('H:i'),
+        'clock_out'       => $roundedOut ? $roundedOut->format('H:i') : null,
         'break_minutes'   => $breakMinutes,
         'working_minutes' => $workingMinutes,
         'session_number'  => $row['session_number'] ?? 1,
@@ -396,7 +401,7 @@ foreach ($maidoByNameDate as $key => $maidoEntries) {
             $diffIn  = compareTimes($m['clock_in'], $pochiFirstIn);
             $diffOut = compareTimes($m['clock_out'], $pochiLastOut);
 
-            $isMismatch = (abs($diffWork) > 0.01) || ($diffIn !== '0') || ($diffOut !== '0');
+            $isMismatch = (abs($diffWork) > 0.01);
 
             if ($isMismatch) {
                 $mismatchCount++;
@@ -450,9 +455,7 @@ foreach ($maidoByNameDate as $key => $maidoEntries) {
             $diffIn  = compareTimes($m['clock_in'], $p['clock_in']);
             $diffOut = compareTimes($m['clock_out'], $p['clock_out']);
 
-            $isMismatch = ($diffWork !== null && abs($diffWork) > 0.01)
-                       || ($diffIn !== '0')
-                       || ($diffOut !== '0');
+            $isMismatch = ($diffWork !== null && abs($diffWork) > 0.01);
 
             if ($isMismatch) {
                 $mismatchCount++;
@@ -631,6 +634,27 @@ foreach ($byPerson as $name => $counts) {
 echo "\n完了。\n";
 
 // ── ヘルパー関数 ────────────────────────────────
+
+/**
+ * Round a DateTime by unit minutes and direction (ceil/floor/none).
+ * Mirrors TimeService::roundTime().
+ */
+function roundTime(DateTime $dt, int $unitMinutes, string $direction): DateTime
+{
+    if ($direction === 'none' || $unitMinutes <= 1) {
+        return clone $dt;
+    }
+    $sec = $unitMinutes * 60;
+    $ts = $dt->getTimestamp();
+    if ($direction === 'floor') {
+        $rounded = intdiv($ts, $sec) * $sec;
+    } else { // ceil
+        $rounded = (int)ceil($ts / $sec) * $sec;
+    }
+    $new = clone $dt;
+    $new->setTimestamp($rounded);
+    return $new;
+}
 
 /**
  * HH:MM 同士を比較し、差（分）を返す。一致なら "0"
