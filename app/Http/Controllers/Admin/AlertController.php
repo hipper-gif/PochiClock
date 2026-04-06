@@ -14,9 +14,10 @@ class AlertController extends Controller
         $date = $request->input('date', Carbon::yesterday()->toDateString());
         $alertService = app(AlertService::class);
 
+        $missingClockIns  = $alertService->getMissingClockIns($date);
         $missingClockOuts = $alertService->getMissingClockOuts($date);
         $shiftOvertime    = $alertService->getShiftOvertime($date);
 
-        return view('admin.alerts.index', compact('missingClockOuts', 'shiftOvertime', 'date'));
+        return view('admin.alerts.index', compact('missingClockIns', 'missingClockOuts', 'shiftOvertime', 'date'));
     }
 }

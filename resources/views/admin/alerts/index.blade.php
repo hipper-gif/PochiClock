@@ -19,18 +19,56 @@
     </p>
 </div>
 
-{{-- 未打刻アラート --}}
+{{-- 出勤未打刻アラート --}}
+<div class="bg-white rounded-lg shadow mb-6 overflow-hidden">
+    <div class="bg-purple-50 px-4 py-3 border-b border-purple-100">
+        <h2 class="font-semibold text-purple-800">
+            出勤未打刻
+            <span class="ml-2 text-sm font-normal">({{ $missingClockIns->count() }}件)</span>
+        </h2>
+        <p class="text-xs text-purple-600 mt-1">出勤予定なのに打刻がないユーザー</p>
+    </div>
+
+    @if($missingClockIns->isEmpty())
+        <div class="px-4 py-6 text-center text-green-700 text-sm">
+            問題ありません
+        </div>
+    @else
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b text-gray-500 text-xs">
+                    <th class="px-4 py-2 text-left">氏名</th>
+                    <th class="px-4 py-2 text-left">部署</th>
+                    <th class="px-4 py-2 text-left">状態</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                @foreach($missingClockIns as $user)
+                <tr>
+                    <td class="px-4 py-2 font-medium">{{ $user->name }}</td>
+                    <td class="px-4 py-2 text-gray-500">{{ $user->department?->name ?? '未所属' }}</td>
+                    <td class="px-4 py-2">
+                        <span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded">出勤打刻なし</span>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+</div>
+
+{{-- 退勤未打刻アラート --}}
 <div class="bg-white rounded-lg shadow mb-6 overflow-hidden">
     <div class="bg-rose-50 px-4 py-3 border-b border-rose-100">
         <h2 class="font-semibold text-rose-800">
-            未打刻アラート
+            退勤未打刻
             <span class="ml-2 text-sm font-normal">({{ $missingClockOuts->count() }}件)</span>
         </h2>
     </div>
 
     @if($missingClockOuts->isEmpty())
         <div class="px-4 py-6 text-center text-green-700 text-sm">
-            ✓ 問題ありません
+            問題ありません
         </div>
     @else
         <table class="w-full text-sm">
