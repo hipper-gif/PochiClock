@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="text-center">
+    <img src="{{ asset('images/logo.png') }}" alt="PochiClock" class="h-20 w-20 object-contain mx-auto mb-3">
     <h1 class="text-4xl font-bold mb-2 text-sky-600">PochiClock</h1>
     <p class="text-gray-500 mb-12">部署を選択してください</p>
 

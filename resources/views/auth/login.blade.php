@@ -4,8 +4,9 @@
 <div class="w-full max-w-md">
     <div class="bg-white rounded-lg shadow-md p-8">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-indigo-600">PochiClock</h1>
-            <p class="text-gray-500 mt-2">勤怠管理システム</p>
+            <img src="{{ asset('images/logo.png') }}" alt="PochiClock" class="h-20 w-20 object-contain mx-auto mb-3">
+            <h1 class="text-3xl font-bold text-sky-600">PochiClock</h1>
+            <p class="text-gray-500 mt-1">勤怠管理システム</p>
         </div>
 
         <form method="POST" action="{{ route('login') }}">

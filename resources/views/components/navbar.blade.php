@@ -2,7 +2,10 @@
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex justify-between h-16">
             <div class="flex items-center space-x-8">
-                <a href="{{ route('dashboard') }}" class="text-xl font-bold text-indigo-600">PochiClock</a>
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                    <img src="{{ asset('images/logo.png') }}" alt="PochiClock" class="h-8 w-8 object-contain">
+                    <span class="text-xl font-bold text-sky-600">PochiClock</span>
+                </a>
                 <a href="{{ route('dashboard') }}" class="text-sm {{ request()->routeIs('dashboard') ? 'text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-900' }}">ダッシュボード</a>
                 <a href="{{ route('dashboard.history') }}" class="text-sm {{ request()->routeIs('dashboard.history') ? 'text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-900' }}">勤怠履歴</a>
                 <a href="{{ route('profile.show') }}" class="text-sm {{ request()->routeIs('profile.show') ? 'text-indigo-600 font-semibold' : 'text-gray-600 hover:text-gray-900' }}">プロフィール</a>
