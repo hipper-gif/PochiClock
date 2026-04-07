@@ -7,7 +7,7 @@
     <title>{{ config('app.name') }} - キオスク</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-900 min-h-screen text-white">
+<body class="bg-gradient-to-b from-sky-50 to-white min-h-screen text-gray-800">
     <main class="max-w-2xl mx-auto px-4 py-8">
         @yield('content')
     </main>
