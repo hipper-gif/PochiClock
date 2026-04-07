@@ -133,6 +133,6 @@ class User extends Authenticatable
 
     public function getQrCodeUrl(): string
     {
-        return config('app.url') . '/qr-verify/' . $this->qr_token;
+        return url('/kiosk/qr-verify') . '/' . $this->qr_token;
     }
 }
