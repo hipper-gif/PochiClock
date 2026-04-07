@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Traits\HasCuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class AuditLog extends Model
 {
-    use HasUuids, BelongsToTenant;
+    use HasCuids, BelongsToTenant;
 
     const UPDATED_AT = null;
 

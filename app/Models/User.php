@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Enums\Role;
 use App\Traits\Auditable;
 use App\Traits\BelongsToTenant;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Traits\HasCuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
-    use HasUuids, HasFactory, BelongsToTenant, Auditable, SoftDeletes;
+    use HasCuids, HasFactory, BelongsToTenant, Auditable, SoftDeletes;
 
     protected $fillable = [
         'tenant_id',

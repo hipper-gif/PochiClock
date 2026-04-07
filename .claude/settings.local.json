@@ -8,7 +8,24 @@
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l app/Models/BreakRecord.php)",
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l routes/web.php)",
       "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe -l bootstrap/app.php)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(git push:*)",
+      "mcp__claude_ai_Slack__slack_search_channels",
+      "mcp__claude_ai_Slack__slack_send_message",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe artisan:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:maido-system.jp)",
+      "Bash(/c/laragon/bin/php/php-8.3.30-Win32-vs16-x64/php.exe:*)",
+      "Bash(php:*)",
+      "Bash(where php:*)",
+      "Bash(find \"/c/projects/PochiClock\" -type f \\\\\\( -name \"*.php\" -o -name \"*.md\" \\\\\\) -exec grep -l \"smartclock\\\\|SmartClock\\\\|smart_clock\\\\|migration\\\\|import\" {} \\\\;)",
+      "Bash(grep -A 5 \"add.*tenant_id\" \"/c/projects/PochiClock/database/migrations/\"*.php)",
+      "Bash(grep \" OK$\")",
+      "Bash(xargs grep:*)",
+      "Bash(bash:*)",
+      "WebFetch(domain:twinklemark.xsrv.jp)",
+      "Bash(ssh xserver-smartclock:*)",
+      "Bash(grep:*)"
     ]
   }
 }
