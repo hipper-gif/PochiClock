@@ -63,6 +63,19 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 let code = '';
 let currentUserId = null;
 let sessionData = null;
+let idleTimer = null;
+const IDLE_SECONDS = 120; // 2分操作なしでトップへ
+
+function resetIdle() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+        window.location.href = '{{ route("kiosk.index") }}';
+    }, IDLE_SECONDS * 1000);
+}
+
+document.addEventListener('click', resetIdle);
+document.addEventListener('keydown', resetIdle);
+resetIdle();
 
 function updateDisplay() {
     const display = code.padEnd(4, '_').split('').join('');
