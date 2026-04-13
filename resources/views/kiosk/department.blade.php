@@ -168,21 +168,34 @@ async function lookup() {
     document.getElementById('actionPhase').classList.remove('hidden');
 }
 
+function getPosition() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) return resolve(null);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+            () => resolve(null),
+            { timeout: 5000, maximumAge: 60000 }
+        );
+    });
+}
+
 async function doClockIn() {
+    const pos = await getPosition();
     const res = await fetch(clockInUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-        body: JSON.stringify({ user_id: currentUserId })
+        body: JSON.stringify({ user_id: currentUserId, ...pos })
     });
     const data = await res.json();
     showDone(data.message);
 }
 
 async function doClockOut() {
+    const pos = await getPosition();
     const res = await fetch(clockOutUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-        body: JSON.stringify({ user_id: currentUserId })
+        body: JSON.stringify({ user_id: currentUserId, ...pos })
     });
     const data = await res.json();
     showDone(data.message);

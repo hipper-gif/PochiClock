@@ -2,15 +2,28 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name') }} - キオスク</title>
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
+    @if(isset($department))
+    <link rel="manifest" href="{{ route('kiosk.manifest', $department) }}">
+    @endif
+    <meta name="theme-color" content="#38bdf8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ isset($department) ? $department->name : 'PochiClock' }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/icon-192.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-b from-sky-50 to-white min-h-screen text-gray-800">
     <main class="max-w-2xl mx-auto px-4 py-8">
         @yield('content')
     </main>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('{{ asset("sw.js") }}', {scope: '{{ url("/kiosk/") }}/'});
+    }
+    </script>
 </body>
 </html>

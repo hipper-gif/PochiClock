@@ -20,6 +20,44 @@ class KioskController extends Controller
         return view('kiosk.index', compact('departments'));
     }
 
+    public function manifest(Department $department)
+    {
+        $manifest = [
+            'name' => config('app.name') . ' - ' . $department->name,
+            'short_name' => $department->name,
+            'description' => $department->name . ' 勤怠打刻キオスク',
+            'start_url' => route('kiosk.department', $department),
+            'scope' => url('/kiosk/'),
+            'display' => 'standalone',
+            'background_color' => '#f0f9ff',
+            'theme_color' => '#38bdf8',
+            'orientation' => 'portrait',
+            'icons' => [
+                [
+                    'src' => asset('icons/icon.svg'),
+                    'sizes' => 'any',
+                    'type' => 'image/svg+xml',
+                    'purpose' => 'any',
+                ],
+                [
+                    'src' => asset('icons/icon-192.png'),
+                    'sizes' => '192x192',
+                    'type' => 'image/png',
+                    'purpose' => 'any maskable',
+                ],
+                [
+                    'src' => asset('icons/icon-512.png'),
+                    'sizes' => '512x512',
+                    'type' => 'image/png',
+                    'purpose' => 'any maskable',
+                ],
+            ],
+        ];
+
+        return response()->json($manifest)
+            ->header('Content-Type', 'application/manifest+json');
+    }
+
     public function department(Department $department)
     {
         $this->setTenantFromDepartment($department);
@@ -136,6 +174,8 @@ class KioskController extends Controller
             'user_id' => $user->id,
             'session_number' => $sessionNumber,
             'clock_in' => Carbon::now(),
+            'clock_in_lat' => $request->input('latitude'),
+            'clock_in_lng' => $request->input('longitude'),
         ]);
 
         return response()->json(['success' => true, 'message' => '出勤しました']);
@@ -171,7 +211,11 @@ class KioskController extends Controller
             $activeBreak->update(['break_end' => Carbon::now()]);
         }
 
-        $attendance->update(['clock_out' => Carbon::now()]);
+        $attendance->update([
+            'clock_out' => Carbon::now(),
+            'clock_out_lat' => $request->input('latitude'),
+            'clock_out_lng' => $request->input('longitude'),
+        ]);
 
         return response()->json(['success' => true, 'message' => '退勤しました']);
     }

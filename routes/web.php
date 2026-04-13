@@ -150,6 +150,7 @@ Route::prefix('kiosk')->group(function () {
     Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
     Route::get('/{department}/qr', [QrScannerController::class, 'index'])->name('kiosk.qr');
     Route::post('/qr-verify', [QrScannerController::class, 'verify'])->name('kiosk.qrVerify');
+    Route::get('/{department}/manifest.json', [KioskController::class, 'manifest'])->name('kiosk.manifest');
     Route::get('/{department}', [KioskController::class, 'department'])->name('kiosk.department');
     Route::post('/{department}/lookup', [KioskController::class, 'lookup'])->name('kiosk.lookup');
     Route::post('/{department}/clock-in', [KioskController::class, 'clockIn'])->name('kiosk.clockIn');
