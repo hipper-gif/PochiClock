@@ -22,7 +22,7 @@
     </main>
     <script>
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('{{ asset("sw.js") }}', {scope: '{{ url("/kiosk/") }}/'});
+        navigator.serviceWorker.register('{{ asset("sw.js") }}', {scope: '{{ url("/kiosk") }}/'});
     }
     </script>
 </body>
