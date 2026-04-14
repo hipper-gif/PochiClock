@@ -25,7 +25,10 @@
       "Bash(bash:*)",
       "WebFetch(domain:twinklemark.xsrv.jp)",
       "Bash(ssh xserver-smartclock:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "mcp__claude_ai_Slack__slack_search_public",
+      "Bash(find:*)",
+      "Bash(curl -s https://twinklemark.xsrv.jp/pochiclock/manifest.json)"
     ]
   }
 }
