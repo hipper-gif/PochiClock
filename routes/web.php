@@ -12,6 +12,41 @@ use App\Http\Controllers\QrScannerController;
 use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
 
+// PWA manifest（動的生成 - サブディレクトリ対応）
+Route::get('/manifest.json', function () {
+    return response()->json([
+        'name' => config('app.name') . ' - 勤怠管理',
+        'short_name' => config('app.name'),
+        'description' => 'かんたん勤怠打刻アプリ',
+        'start_url' => url('/dashboard'),
+        'scope' => url('/'),
+        'display' => 'standalone',
+        'background_color' => '#ffffff',
+        'theme_color' => '#38bdf8',
+        'orientation' => 'portrait',
+        'icons' => [
+            [
+                'src' => asset('icons/icon.svg'),
+                'sizes' => 'any',
+                'type' => 'image/svg+xml',
+                'purpose' => 'any',
+            ],
+            [
+                'src' => asset('icons/icon-192.png'),
+                'sizes' => '192x192',
+                'type' => 'image/png',
+                'purpose' => 'any maskable',
+            ],
+            [
+                'src' => asset('icons/icon-512.png'),
+                'sizes' => '512x512',
+                'type' => 'image/png',
+                'purpose' => 'any maskable',
+            ],
+        ],
+    ], 200, ['Content-Type' => 'application/manifest+json']);
+})->name('manifest');
+
 // ルートリダイレクト
 Route::get('/', function () {
     if (\App\Models\User::count() === 0) {
